@@ -17,8 +17,8 @@
 
     if (savedTheme) {
         setTheme(savedTheme);
-    } else if (prefersDark) {
-        setTheme('dark');
+    } else {
+        setTheme('light');
     }
 
     themeToggle.addEventListener('click', function () {
