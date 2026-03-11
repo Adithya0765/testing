@@ -13,13 +13,14 @@ const rateLimit = require('express-rate-limit');
 let Database;
 try { Database = require('better-sqlite3'); } catch (e) { Database = null; }
 
-let pgSql;
-try { pgSql = require('@vercel/postgres').sql; } catch (e) { pgSql = null; }
+let pgCreateClient;
+try { pgCreateClient = require('@vercel/postgres').createClient; } catch (e) { pgCreateClient = null; }
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_VERCEL = !!process.env.VERCEL;
-const HAS_POSTGRES = !!(pgSql && process.env.POSTGRES_URL);
+const POSTGRES_CONNECTION_STRING = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.PRISMA_DATABASE_URL;
+const HAS_POSTGRES = !!(pgCreateClient && POSTGRES_CONNECTION_STRING);
 
 // Trust the first proxy (Vercel, etc.) so express-rate-limit reads X-Forwarded-For correctly
 app.set('trust proxy', 1);
@@ -49,11 +50,21 @@ app.use('/api/', apiLimiter);
 let db = null;
 let postgresSchemaReady = null;
 
+async function pgQuery(queryText, values = []) {
+    const client = pgCreateClient({ connectionString: POSTGRES_CONNECTION_STRING });
+    await client.connect();
+    try {
+        return await client.query(queryText, values);
+    } finally {
+        await client.end();
+    }
+}
+
 async function ensurePostgresSchema() {
     if (!HAS_POSTGRES) return;
     if (!postgresSchemaReady) {
         postgresSchemaReady = (async () => {
-            await pgSql`
+            await pgQuery(`
                 CREATE TABLE IF NOT EXISTS registrations (
                     id SERIAL PRIMARY KEY,
                     first_name TEXT NOT NULL,
@@ -66,9 +77,9 @@ async function ensurePostgresSchema() {
                     registered_at TIMESTAMPTZ DEFAULT NOW(),
                     email_confirmed INTEGER DEFAULT 0
                 )
-            `;
+            `);
 
-            await pgSql`
+            await pgQuery(`
                 CREATE TABLE IF NOT EXISTS contact_messages (
                     id SERIAL PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -77,14 +88,14 @@ async function ensurePostgresSchema() {
                     message TEXT NOT NULL,
                     sent_at TIMESTAMPTZ DEFAULT NOW()
                 )
-            `;
+            `);
         })();
     }
     await postgresSchemaReady;
 }
 
 if (HAS_POSTGRES) {
-    console.log('Using Vercel Postgres for persistent storage.');
+    console.log('Using Postgres for persistent storage.');
 } else if (Database && !IS_VERCEL) {
     try {
         db = new Database(path.join(__dirname, 'qualium.db'));
@@ -461,18 +472,21 @@ app.post('/api/register', async (req, res) => {
         if (HAS_POSTGRES) {
             await ensurePostgresSchema();
             try {
-                await pgSql`
+                await pgQuery(
+                    `
                     INSERT INTO registrations (first_name, last_name, email, phone, company, role, use_case)
-                    VALUES (
-                        ${firstName.trim()},
-                        ${lastName.trim()},
-                        ${email.trim().toLowerCase()},
-                        ${(phone || '').trim()},
-                        ${(company || '').trim()},
-                        ${(role || '').trim()},
-                        ${(useCase || '').trim()}
-                    )
-                `;
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    `,
+                    [
+                        firstName.trim(),
+                        lastName.trim(),
+                        email.trim().toLowerCase(),
+                        (phone || '').trim(),
+                        (company || '').trim(),
+                        (role || '').trim(),
+                        (useCase || '').trim()
+                    ]
+                );
             } catch (dbErr) {
                 if (dbErr.code === '23505') {
                     return res.status(409).json({ success: false, message: 'This email is already registered.' });
@@ -552,15 +566,18 @@ app.post('/api/contact', async (req, res) => {
         // Save to database (Postgres on Vercel, SQLite locally)
         if (HAS_POSTGRES) {
             await ensurePostgresSchema();
-            await pgSql`
+            await pgQuery(
+                `
                 INSERT INTO contact_messages (name, email, company, message)
-                VALUES (
-                    ${name.trim()},
-                    ${email.trim().toLowerCase()},
-                    ${(company || '').trim()},
-                    ${message.trim()}
-                )
-            `;
+                VALUES ($1, $2, $3, $4)
+                `,
+                [
+                    name.trim(),
+                    email.trim().toLowerCase(),
+                    (company || '').trim(),
+                    message.trim()
+                ]
+            );
         } else if (db) {
             const stmt = db.prepare(`
                 INSERT INTO contact_messages (name, email, company, message)
@@ -633,23 +650,23 @@ app.get('/api/stats', async (req, res) => {
         if (HAS_POSTGRES) {
             await ensurePostgresSchema();
 
-            const regCountResult = await pgSql`SELECT COUNT(*)::int AS count FROM registrations`;
-            const contactCountResult = await pgSql`SELECT COUNT(*)::int AS count FROM contact_messages`;
+            const regCountResult = await pgQuery('SELECT COUNT(*)::int AS count FROM registrations');
+            const contactCountResult = await pgQuery('SELECT COUNT(*)::int AS count FROM contact_messages');
             registrationsCount = regCountResult.rows[0]?.count || 0;
             contactsCount = contactCountResult.rows[0]?.count || 0;
 
-            const regResult = await pgSql`
+            const regResult = await pgQuery(`
                 SELECT id, first_name, last_name, email, phone, company, role, use_case, registered_at
                 FROM registrations
                 ORDER BY registered_at DESC
                 LIMIT 10
-            `;
-            const contactResult = await pgSql`
+            `);
+            const contactResult = await pgQuery(`
                 SELECT id, name, email, company, message, sent_at
                 FROM contact_messages
                 ORDER BY sent_at DESC
                 LIMIT 10
-            `;
+            `);
             recentRegistrations = regResult.rows;
             recentContacts = contactResult.rows;
         } else {
@@ -690,7 +707,7 @@ app.get('/api/registrations', async (req, res) => {
         let rows;
         if (HAS_POSTGRES) {
             await ensurePostgresSchema();
-            const result = await pgSql`SELECT * FROM registrations ORDER BY registered_at DESC`;
+            const result = await pgQuery('SELECT * FROM registrations ORDER BY registered_at DESC');
             rows = result.rows;
         } else {
             rows = db.prepare('SELECT * FROM registrations ORDER BY registered_at DESC').all();
@@ -709,7 +726,7 @@ app.get('/api/contacts', async (req, res) => {
         let rows;
         if (HAS_POSTGRES) {
             await ensurePostgresSchema();
-            const result = await pgSql`SELECT * FROM contact_messages ORDER BY sent_at DESC`;
+            const result = await pgQuery('SELECT * FROM contact_messages ORDER BY sent_at DESC');
             rows = result.rows;
         } else {
             rows = db.prepare('SELECT * FROM contact_messages ORDER BY sent_at DESC').all();
