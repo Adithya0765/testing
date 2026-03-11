@@ -16,6 +16,9 @@ try { Database = require('better-sqlite3'); } catch (e) { Database = null; }
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust the first proxy (Vercel, etc.) so express-rate-limit reads X-Forwarded-For correctly
+app.set('trust proxy', 1);
+
 // --- Middleware ---
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname), {
@@ -80,7 +83,10 @@ const SMTP_CONFIG = {
     auth: {
         user: process.env.SMTP_USER || 'admin@qauliumai.in',
         pass: process.env.SMTP_PASS || ''
-    }
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
 };
 
 const SMTP_FROM = process.env.SMTP_FROM || '"Qaulium AI" <admin@qauliumai.in>';
