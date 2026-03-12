@@ -98,7 +98,7 @@ app.use((req, res, next) => {
     }
 
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 
     if (req.method === 'OPTIONS') {
         return res.status(204).send('');
@@ -1210,6 +1210,253 @@ app.get('/api/admin/careers', requireAdminAuth, async (req, res) => {
         return res.json({ success: true, count: rows.length, data: rows });
     } catch (err) {
         console.error('Admin careers error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+function parseAdminId(req, res) {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ success: false, message: 'Invalid record id.' });
+        return null;
+    }
+    return id;
+}
+
+app.put('/api/admin/registrations/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+
+        const payload = req.body || {};
+        const firstName = String(payload.first_name || '').trim();
+        const lastName = String(payload.last_name || '').trim();
+        const email = String(payload.email || '').trim().toLowerCase();
+        const phone = String(payload.phone || '').trim();
+        const company = String(payload.company || '').trim();
+        const role = String(payload.role || '').trim();
+        const useCase = String(payload.use_case || '').trim();
+
+        if (!firstName || !lastName || !email) {
+            return res.status(400).json({ success: false, message: 'first_name, last_name and email are required.' });
+        }
+
+        let updated = false;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery(
+                `UPDATE registrations
+                 SET first_name = $1, last_name = $2, email = $3, phone = $4, company = $5, role = $6, use_case = $7
+                 WHERE id = $8`,
+                [firstName, lastName, email, phone, company, role, useCase, id]
+            );
+            updated = (result.rowCount || 0) > 0;
+        } else if (db) {
+            const result = db.prepare(
+                `UPDATE registrations
+                 SET first_name = ?, last_name = ?, email = ?, phone = ?, company = ?, role = ?, use_case = ?
+                 WHERE id = ?`
+            ).run(firstName, lastName, email, phone, company, role, useCase, id);
+            updated = (result.changes || 0) > 0;
+        }
+
+        if (!updated) {
+            return res.status(404).json({ success: false, message: 'Registration not found.' });
+        }
+        return res.json({ success: true, message: 'Registration updated.' });
+    } catch (err) {
+        console.error('Admin registrations update error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.delete('/api/admin/registrations/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+
+        let deleted = false;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('DELETE FROM registrations WHERE id = $1', [id]);
+            deleted = (result.rowCount || 0) > 0;
+        } else if (db) {
+            const result = db.prepare('DELETE FROM registrations WHERE id = ?').run(id);
+            deleted = (result.changes || 0) > 0;
+        }
+
+        if (!deleted) {
+            return res.status(404).json({ success: false, message: 'Registration not found.' });
+        }
+        return res.json({ success: true, message: 'Registration deleted.' });
+    } catch (err) {
+        console.error('Admin registrations delete error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.put('/api/admin/contacts/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+
+        const payload = req.body || {};
+        const name = String(payload.name || '').trim();
+        const email = String(payload.email || '').trim().toLowerCase();
+        const company = String(payload.company || '').trim();
+        const message = String(payload.message || '').trim();
+
+        if (!name || !email || !message) {
+            return res.status(400).json({ success: false, message: 'name, email and message are required.' });
+        }
+
+        let updated = false;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery(
+                `UPDATE contact_messages
+                 SET name = $1, email = $2, company = $3, message = $4
+                 WHERE id = $5`,
+                [name, email, company, message, id]
+            );
+            updated = (result.rowCount || 0) > 0;
+        } else if (db) {
+            const result = db.prepare(
+                `UPDATE contact_messages
+                 SET name = ?, email = ?, company = ?, message = ?
+                 WHERE id = ?`
+            ).run(name, email, company, message, id);
+            updated = (result.changes || 0) > 0;
+        }
+
+        if (!updated) {
+            return res.status(404).json({ success: false, message: 'Contact message not found.' });
+        }
+        return res.json({ success: true, message: 'Contact message updated.' });
+    } catch (err) {
+        console.error('Admin contacts update error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.delete('/api/admin/contacts/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+
+        let deleted = false;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('DELETE FROM contact_messages WHERE id = $1', [id]);
+            deleted = (result.rowCount || 0) > 0;
+        } else if (db) {
+            const result = db.prepare('DELETE FROM contact_messages WHERE id = ?').run(id);
+            deleted = (result.changes || 0) > 0;
+        }
+
+        if (!deleted) {
+            return res.status(404).json({ success: false, message: 'Contact message not found.' });
+        }
+        return res.json({ success: true, message: 'Contact message deleted.' });
+    } catch (err) {
+        console.error('Admin contacts delete error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.put('/api/admin/careers/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+
+        const payload = req.body || {};
+        const firstName = String(payload.first_name || '').trim();
+        const lastName = String(payload.last_name || '').trim();
+        const email = String(payload.email || '').trim().toLowerCase();
+        const phone = String(payload.phone || '').trim();
+        const roleApplied = String(payload.role_applied || '').trim();
+        const location = String(payload.location || '').trim();
+        const university = String(payload.university || '').trim();
+        const degree = String(payload.degree || '').trim();
+        const graduationYear = parseInt(payload.graduation_year || 0, 10) || 0;
+        const availability = String(payload.availability || '').trim();
+        const linkedinUrl = String(payload.linkedin_url || '').trim();
+        const portfolioUrl = String(payload.portfolio_url || '').trim();
+        const resumeUrl = String(payload.resume_url || '').trim();
+        const coverLetter = String(payload.cover_letter || '').trim();
+        const currentCompany = String(payload.current_company || '').trim();
+        const experienceYears = parseInt(payload.experience_years || 0, 10) || 0;
+
+        if (!firstName || !lastName || !email || !roleApplied) {
+            return res.status(400).json({ success: false, message: 'first_name, last_name, email and role_applied are required.' });
+        }
+
+        let updated = false;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery(
+                `UPDATE career_applications
+                 SET first_name = $1, last_name = $2, email = $3, phone = $4, role_applied = $5,
+                     location = $6, university = $7, degree = $8, graduation_year = $9, availability = $10,
+                     linkedin_url = $11, portfolio_url = $12, resume_url = $13, cover_letter = $14,
+                     current_company = $15, experience_years = $16
+                 WHERE id = $17`,
+                [
+                    firstName, lastName, email, phone, roleApplied,
+                    location, university, degree, graduationYear, availability,
+                    linkedinUrl, portfolioUrl, resumeUrl, coverLetter,
+                    currentCompany, experienceYears, id
+                ]
+            );
+            updated = (result.rowCount || 0) > 0;
+        } else if (db) {
+            const result = db.prepare(
+                `UPDATE career_applications
+                 SET first_name = ?, last_name = ?, email = ?, phone = ?, role_applied = ?,
+                     location = ?, university = ?, degree = ?, graduation_year = ?, availability = ?,
+                     linkedin_url = ?, portfolio_url = ?, resume_url = ?, cover_letter = ?,
+                     current_company = ?, experience_years = ?
+                 WHERE id = ?`
+            ).run(
+                firstName, lastName, email, phone, roleApplied,
+                location, university, degree, graduationYear, availability,
+                linkedinUrl, portfolioUrl, resumeUrl, coverLetter,
+                currentCompany, experienceYears, id
+            );
+            updated = (result.changes || 0) > 0;
+        }
+
+        if (!updated) {
+            return res.status(404).json({ success: false, message: 'Career application not found.' });
+        }
+        return res.json({ success: true, message: 'Career application updated.' });
+    } catch (err) {
+        console.error('Admin careers update error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.delete('/api/admin/careers/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+
+        let deleted = false;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('DELETE FROM career_applications WHERE id = $1', [id]);
+            deleted = (result.rowCount || 0) > 0;
+        } else if (db) {
+            const result = db.prepare('DELETE FROM career_applications WHERE id = ?').run(id);
+            deleted = (result.changes || 0) > 0;
+        }
+
+        if (!deleted) {
+            return res.status(404).json({ success: false, message: 'Career application not found.' });
+        }
+        return res.json({ success: true, message: 'Career application deleted.' });
+    } catch (err) {
+        console.error('Admin careers delete error:', err.message);
         return res.status(500).json({ success: false, message: 'Internal server error.' });
     }
 });

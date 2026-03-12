@@ -176,6 +176,17 @@ textarea { resize: vertical; }
   background: transparent;
 }
 
+.btn.danger {
+  border-color: color-mix(in oklab, var(--err) 45%, var(--border-strong));
+  color: var(--err);
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .status {
   margin-top: 12px;
   font-size: 14px;

@@ -405,6 +405,13 @@
     body.innerHTML = '<tr><td colspan="' + colCount + '">No records found.</td></tr>';
   }
 
+  function rowActions(type, id) {
+    return '<div class="row-actions">' +
+      '<button class="btn btn-secondary btn-sm" data-action="edit" data-type="' + type + '" data-id="' + id + '">Edit</button>' +
+      '<button class="btn btn-secondary btn-sm danger" data-action="delete" data-type="' + type + '" data-id="' + id + '">Delete</button>' +
+      '</div>';
+  }
+
   function getFilteredRegistrations() {
     const q = (registrationsSearch && registrationsSearch.value || '').trim().toLowerCase();
     return state.tables.registrations.rows.filter(function (row) {
@@ -441,7 +448,7 @@
     state.tables.registrations.page = paged.page;
 
     if (!paged.rows.length) {
-      renderNoRows(registrationsBody, 6);
+      renderNoRows(registrationsBody, 7);
     } else {
       registrationsBody.innerHTML = paged.rows.map(function (row) {
         return '<tr>' +
@@ -451,6 +458,7 @@
           '<td>' + escapeHtml(row.company || '-') + '</td>' +
           '<td>' + escapeHtml(row.role || '-') + '</td>' +
           '<td>' + escapeHtml(formatDate(row.registered_at)) + '</td>' +
+          '<td>' + rowActions('registrations', row.id) + '</td>' +
         '</tr>';
       }).join('');
     }
@@ -466,7 +474,7 @@
     state.tables.contacts.page = paged.page;
 
     if (!paged.rows.length) {
-      renderNoRows(contactsBody, 5);
+      renderNoRows(contactsBody, 6);
     } else {
       contactsBody.innerHTML = paged.rows.map(function (row) {
         return '<tr>' +
@@ -475,6 +483,7 @@
           '<td>' + escapeHtml(row.company || '-') + '</td>' +
           '<td>' + escapeHtml(row.message || '-') + '</td>' +
           '<td>' + escapeHtml(formatDate(row.sent_at)) + '</td>' +
+          '<td>' + rowActions('contacts', row.id) + '</td>' +
         '</tr>';
       }).join('');
     }
@@ -490,7 +499,7 @@
     state.tables.careers.page = paged.page;
 
     if (!paged.rows.length) {
-      renderNoRows(careersBody, 7);
+      renderNoRows(careersBody, 8);
     } else {
       careersBody.innerHTML = paged.rows.map(function (row) {
         return '<tr>' +
@@ -501,6 +510,7 @@
           '<td>' + escapeHtml(row.degree || '-') + '</td>' +
           '<td>' + escapeHtml(row.graduation_year || '-') + '</td>' +
           '<td>' + escapeHtml(formatDate(row.applied_at)) + '</td>' +
+          '<td>' + rowActions('careers', row.id) + '</td>' +
         '</tr>';
       }).join('');
     }
@@ -514,6 +524,102 @@
     renderRegistrationsTable();
     renderContactsTable();
     renderCareersTable();
+  }
+
+  function getRowsByType(type) {
+    if (type === 'registrations') return state.tables.registrations.rows;
+    if (type === 'contacts') return state.tables.contacts.rows;
+    if (type === 'careers') return state.tables.careers.rows;
+    return [];
+  }
+
+  function getEditablePayload(type, row) {
+    if (type === 'registrations') {
+      return {
+        first_name: row.first_name || '',
+        last_name: row.last_name || '',
+        email: row.email || '',
+        phone: row.phone || '',
+        company: row.company || '',
+        role: row.role || '',
+        use_case: row.use_case || ''
+      };
+    }
+    if (type === 'contacts') {
+      return {
+        name: row.name || '',
+        email: row.email || '',
+        company: row.company || '',
+        message: row.message || ''
+      };
+    }
+    return {
+      first_name: row.first_name || '',
+      last_name: row.last_name || '',
+      email: row.email || '',
+      phone: row.phone || '',
+      role_applied: row.role_applied || '',
+      location: row.location || '',
+      university: row.university || '',
+      degree: row.degree || '',
+      graduation_year: row.graduation_year || 0,
+      availability: row.availability || '',
+      linkedin_url: row.linkedin_url || '',
+      portfolio_url: row.portfolio_url || '',
+      resume_url: row.resume_url || '',
+      cover_letter: row.cover_letter || '',
+      current_company: row.current_company || '',
+      experience_years: row.experience_years || 0
+    };
+  }
+
+  async function editRecord(type, id) {
+    const rows = getRowsByType(type);
+    const row = rows.find(function (item) { return String(item.id) === String(id); });
+    if (!row) {
+      window.alert('Record not found.');
+      return;
+    }
+
+    const input = window.prompt(
+      'Edit JSON payload and click OK to update:',
+      JSON.stringify(getEditablePayload(type, row), null, 2)
+    );
+    if (input === null) return;
+
+    let payload;
+    try {
+      payload = JSON.parse(input);
+    } catch (e) {
+      window.alert('Invalid JSON. Please try again.');
+      return;
+    }
+
+    try {
+      await request('/api/admin/' + type + '/' + id, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(payload)
+      });
+      await loadDashboard();
+      window.alert('Record updated successfully.');
+    } catch (err) {
+      window.alert(err.message || 'Update failed.');
+    }
+  }
+
+  async function deleteRecord(type, id) {
+    if (!window.confirm('Delete this record? This action cannot be undone.')) return;
+    try {
+      await request('/api/admin/' + type + '/' + id, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      await loadDashboard();
+      window.alert('Record deleted successfully.');
+    } catch (err) {
+      window.alert(err.message || 'Delete failed.');
+    }
   }
 
   async function loadDashboard() {
@@ -740,6 +846,23 @@
         return [r.first_name, r.last_name, r.email, r.phone, r.role_applied, r.location, r.university, r.degree, r.graduation_year, r.availability, r.linkedin_url, r.portfolio_url, r.resume_url, r.applied_at];
       })
     );
+  });
+
+  [registrationsBody, contactsBody, careersBody].forEach(function (tbody) {
+    tbody.addEventListener('click', function (e) {
+      const btn = e.target.closest('button[data-action][data-type][data-id]');
+      if (!btn) return;
+
+      const action = btn.getAttribute('data-action');
+      const type = btn.getAttribute('data-type');
+      const id = btn.getAttribute('data-id');
+
+      if (action === 'edit') {
+        editRecord(type, id);
+      } else if (action === 'delete') {
+        deleteRecord(type, id);
+      }
+    });
   });
 
   // Audience radio button listeners
