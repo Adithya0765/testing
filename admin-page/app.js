@@ -1,32 +1,187 @@
 (function () {
   'use strict';
 
+  const PAGE_SIZE = 10;
+
   const state = {
     apiBase: localStorage.getItem('qaulium_admin_api_base') || 'https://qauliumai.in',
     token: localStorage.getItem('qaulium_admin_token') || '',
-    admin: null
+    tables: {
+      registrations: { rows: [], page: 1 },
+      contacts: { rows: [], page: 1 },
+      careers: { rows: [], page: 1 }
+    }
   };
 
   const templates = {
-    'internship-offer': {
-      subject: 'Internship Offer - Qaulium AI',
-      body: '<div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937"><h2 style="margin:0 0 12px">Internship Offer Letter</h2><p>Dear Candidate,</p><p>{{CONTENT}}</p><p>Regards,<br>Qaulium AI Hiring Team</p></div>'
+    'registration-welcome': {
+      subject: 'Welcome to Qaulium AI — Registration Confirmed',
+      body: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<table width="100%"><tr>
+<td><h2 style="margin:0;font-size:18px;color:#ffffff;font-weight:700;letter-spacing:-0.02em;">Qaulium AI</h2></td>
+<td align="right" style="font-size:12px;color:#888888;letter-spacing:0.05em;text-transform:uppercase;">Registration Confirmed</td>
+</tr></table>
+</td></tr>
+<tr><td style="background-color:#ffffff;padding:48px 40px;">
+<h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#0A0A0A;letter-spacing:-0.03em;">Welcome.</h1>
+<p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">Your registration has been confirmed.</p>
+<hr style="border:none;border-top:1px solid #E5E7EB;margin:0 0 28px;">
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">Thank you for registering with Qaulium AI. {{CONTENT}}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">If you have questions, reach us at <a href="mailto:admin@qauliumai.in" style="color:#2563EB;text-decoration:none;font-weight:500;">admin@qauliumai.in</a></p>
+</td></tr>
+<tr><td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;border-top:1px solid #1f2937;">
+<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table>
+</body></html>`
     },
-    'interview-invite': {
+    'interview-invitation': {
       subject: 'Interview Invitation - Qaulium AI',
-      body: '<div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937"><h2 style="margin:0 0 12px">Interview Invitation</h2><p>Hello,</p><p>{{CONTENT}}</p><p>Regards,<br>Qaulium AI Team</p></div>'
+      body: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<table width="100%"><tr>
+<td><h2 style="margin:0;font-size:18px;color:#ffffff;font-weight:700;letter-spacing:-0.02em;">Qaulium AI</h2></td>
+<td align="right" style="font-size:12px;color:#888888;letter-spacing:0.05em;text-transform:uppercase;">Interview</td>
+</tr></table>
+</td></tr>
+<tr><td style="background-color:#ffffff;padding:48px 40px;">
+<h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#0A0A0A;letter-spacing:-0.03em;">Interview Invitation</h1>
+<p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">We would like to invite you for an interview.</p>
+<hr style="border:none;border-top:1px solid #E5E7EB;margin:0 0 28px;">
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">{{CONTENT}}</p>
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">We look forward to speaking with you soon.</p>
+<p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">Questions? Reach us at <a href="mailto:admin@qauliumai.in" style="color:#2563EB;text-decoration:none;font-weight:500;">admin@qauliumai.in</a></p>
+</td></tr>
+<tr><td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;border-top:1px solid #1f2937;">
+<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table>
+</body></html>`
     },
-    'profile-followup': {
-      subject: 'Application Follow-up - Qaulium AI',
-      body: '<div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937"><h2 style="margin:0 0 12px">Application Follow-up</h2><p>Hello,</p><p>{{CONTENT}}</p><p>Regards,<br>Qaulium AI Team</p></div>'
+    'career-confirmation': {
+      subject: 'Application Received - Qaulium AI Careers',
+      body: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<table width="100%"><tr>
+<td><h2 style="margin:0;font-size:18px;color:#ffffff;font-weight:700;letter-spacing:-0.02em;">Qaulium AI</h2></td>
+<td align="right" style="font-size:12px;color:#888888;letter-spacing:0.05em;text-transform:uppercase;">Application Received</td>
+</tr></table>
+</td></tr>
+<tr><td style="background-color:#ffffff;padding:48px 40px;">
+<h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#0A0A0A;letter-spacing:-0.03em;">Thank You</h1>
+<p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">We have received your application.</p>
+<hr style="border:none;border-top:1px solid #E5E7EB;margin:0 0 28px;">
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">Our hiring team is reviewing your profile and will get back to you shortly with the next steps. {{CONTENT}}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">For questions, contact us at <a href="mailto:admin@qauliumai.in" style="color:#2563EB;text-decoration:none;font-weight:500;">admin@qauliumai.in</a></p>
+</td></tr>
+<tr><td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;border-top:1px solid #1f2937;">
+<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table>
+</body></html>`
     },
-    'company-update': {
-      subject: 'Qaulium AI - Important Update',
-      body: '<div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937"><h2 style="margin:0 0 12px">Company Update</h2><p>Hello,</p><p>{{CONTENT}}</p><p>Regards,<br>Qaulium AI Team</p></div>'
+    'contact-response': {
+      subject: 'Response from Qaulium AI',
+      body: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<table width="100%"><tr>
+<td><h2 style="margin:0;font-size:18px;color:#ffffff;font-weight:700;letter-spacing:-0.02em;">Qaulium AI</h2></td>
+<td align="right" style="font-size:12px;color:#888888;letter-spacing:0.05em;text-transform:uppercase;">Response</td>
+</tr></table>
+</td></tr>
+<tr><td style="background-color:#ffffff;padding:48px 40px;">
+<h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#0A0A0A;letter-spacing:-0.03em;">Thank You for Reaching Out</h1>
+<p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">We appreciate your inquiry.</p>
+<hr style="border:none;border-top:1px solid #E5E7EB;margin:0 0 28px;">
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">{{CONTENT}}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">Best regards, <br>Qaulium AI Team<br><a href="mailto:admin@qauliumai.in" style="color:#2563EB;text-decoration:none;font-weight:500;">admin@qauliumai.in</a></p>
+</td></tr>
+<tr><td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;border-top:1px solid #1f2937;">
+<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table>
+</body></html>`
+    },
+    'company-announcement': {
+      subject: 'News from Qaulium AI',
+      body: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<table width="100%"><tr>
+<td><h2 style="margin:0;font-size:18px;color:#ffffff;font-weight:700;letter-spacing:-0.02em;">Qaulium AI</h2></td>
+<td align="right" style="font-size:12px;color:#888888;letter-spacing:0.05em;text-transform:uppercase;">Announcement</td>
+</tr></table>
+</td></tr>
+<tr><td style="background-color:#ffffff;padding:48px 40px;">
+<h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#0A0A0A;letter-spacing:-0.03em;">Important Announcement</h1>
+<p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">We have exciting news to share.</p>
+<hr style="border:none;border-top:1px solid #E5E7EB;margin:0 0 28px;">
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">{{CONTENT}}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">Learn more at <a href="https://qauliumai.in" style="color:#2563EB;text-decoration:none;font-weight:500;">qauliumai.in</a></p>
+</td></tr>
+<tr><td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;border-top:1px solid #1f2937;">
+<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table>
+</body></html>`
     },
     'blank': {
-      subject: 'Qaulium AI Communication',
-      body: '<div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937"><h2 style="margin:0 0 12px">Message from Qaulium AI</h2><p>Hello,</p><p>{{CONTENT}}</p><p>Regards,<br>Qaulium AI Team</p></div>'
+      subject: 'Message from Qaulium AI',
+      body: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<h2 style="margin:0;font-size:18px;color:#ffffff;font-weight:700;letter-spacing:-0.02em;">Qaulium AI</h2>
+</td></tr>
+<tr><td style="background-color:#ffffff;padding:48px 40px;">
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">{{CONTENT}}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">Best regards, <br>Qaulium AI Team</p>
+</td></tr>
+<tr><td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;border-top:1px solid #1f2937;">
+<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
+</td></tr>
+</table></td></tr>
+</table>
+</body></html>`
     }
   };
 
@@ -37,7 +192,11 @@
   const apiBaseInput = document.getElementById('apiBase');
   const adminEmailInput = document.getElementById('adminEmail');
   const adminPasswordInput = document.getElementById('adminPassword');
+
   const pageTitle = document.getElementById('pageTitle');
+  const pageSubtitle = document.getElementById('pageSubtitle');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const themeToggleBtn = document.getElementById('themeToggle');
 
   const registrationsBody = document.getElementById('registrationsBody');
   const contactsBody = document.getElementById('contactsBody');
@@ -48,16 +207,65 @@
   const statCareers = document.getElementById('statCareers');
   const statAll = document.getElementById('statAll');
 
-  const audience = document.getElementById('audience');
-  const template = document.getElementById('template');
+  const registrationsSearch = document.getElementById('registrationsSearch');
+  const contactsSearch = document.getElementById('contactsSearch');
+  const careersSearch = document.getElementById('careersSearch');
+  const careersRoleFilter = document.getElementById('careersRoleFilter');
+
+  const registrationsPrevBtn = document.getElementById('registrationsPrevBtn');
+  const registrationsNextBtn = document.getElementById('registrationsNextBtn');
+  const registrationsPageInfo = document.getElementById('registrationsPageInfo');
+  const contactsPrevBtn = document.getElementById('contactsPrevBtn');
+  const contactsNextBtn = document.getElementById('contactsNextBtn');
+  const contactsPageInfo = document.getElementById('contactsPageInfo');
+  const careersPrevBtn = document.getElementById('careersPrevBtn');
+  const careersNextBtn = document.getElementById('careersNextBtn');
+  const careersPageInfo = document.getElementById('careersPageInfo');
+
+  const registrationsExportBtn = document.getElementById('registrationsExportBtn');
+  const contactsExportBtn = document.getElementById('contactsExportBtn');
+  const careersExportBtn = document.getElementById('careersExportBtn');
+
   const customEmailsWrap = document.getElementById('customEmailsWrap');
   const customEmails = document.getElementById('customEmails');
+  const customEmailsHint = document.getElementById('customEmailsHint');
   const emailSubject = document.getElementById('emailSubject');
+  const subjectHint = document.getElementById('subjectHint');
   const middleContent = document.getElementById('middleContent');
+  const bodyHint = document.getElementById('bodyHint');
   const emailBody = document.getElementById('emailBody');
+  const emailPreviewFrame = document.getElementById('emailPreviewFrame');
+  const previewSubject = document.getElementById('previewSubject');
+  const previewRecipients = document.getElementById('previewRecipients');
   const regenerateTemplate = document.getElementById('regenerateTemplate');
+  const saveDraftBtn = document.getElementById('saveDraftBtn');
   const composerForm = document.getElementById('composerForm');
   const composerStatus = document.getElementById('composerStatus');
+
+  const subtitleByTab = {
+    overview: 'Monitor submissions and send communication.',
+    registrations: 'View all platform registrations collected from the landing site.',
+    contacts: 'Review contact inquiries and follow up with responses.',
+    careers: 'Track internship applications and applicant profiles.',
+    composer: 'Compose and send professional bulk emails to selected audiences.'
+  };
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('qaulium_admin_theme', theme);
+    if (themeToggleBtn) {
+      themeToggleBtn.textContent = theme === 'dark' ? 'Light Theme' : 'Dark Theme';
+    }
+  }
 
   function setStatus(el, message, type) {
     el.textContent = message;
@@ -85,14 +293,181 @@
     return d.toLocaleString();
   }
 
-  function renderRows(target, rows, mapFn) {
-    target.innerHTML = rows.map(mapFn).join('') || '<tr><td colspan="10">No records found.</td></tr>';
+  function csvEscape(value) {
+    const text = String(value || '');
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+
+  function downloadCsv(filename, headers, rows) {
+    const lines = [headers.map(csvEscape).join(',')];
+    rows.forEach(function (row) {
+      lines.push(row.map(csvEscape).join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   function applyTemplate() {
-    const def = templates[template.value] || templates.blank;
+    const templateValue = document.querySelector('input[name="template"]:checked')?.value || 'blank';
+    const def = templates[templateValue] || templates.blank;
     emailSubject.value = def.subject;
-    emailBody.value = def.body.replace('{{CONTENT}}', middleContent.value || 'Write your message here.');
+    const content = middleContent.value.trim() || 'Your message here';
+    emailBody.value = def.body.replace('{{CONTENT}}', content);
+    updatePreview();
+  }
+
+  function updatePreview() {
+    if (!emailPreviewFrame) return;
+    emailPreviewFrame.srcdoc = emailBody.value || '<p style="font-family:Arial,sans-serif;padding:20px;color:#999;">Preview will appear here.</p>';
+    
+    // Update preview info
+    if (previewSubject) previewSubject.textContent = emailSubject.value || '—';
+    if (previewRecipients) {
+      const audienceValue = document.querySelector('input[name="audience"]:checked')?.value || 'all';
+      const audienceLabel = {
+        'all': `All Members (${totals.allRequests || 0})`,
+        'registrations': `Registrations (${totals.registrations || 0})`,
+        'contacts': `Contacts (${totals.contacts || 0})`,
+        'careers': `Careers (${totals.careers || 0})`,
+        'custom': `Custom List`
+      }[audienceValue] || 'All Members';
+      previewRecipients.textContent = audienceLabel;
+    }
+  }
+
+  let totals = { registrations: 0, contacts: 0, careers: 0, allRequests: 0 };
+
+  function pageSlice(rows, page) {
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    const safePage = Math.min(Math.max(page, 1), totalPages);
+    const start = (safePage - 1) * PAGE_SIZE;
+    return {
+      page: safePage,
+      totalPages: totalPages,
+      rows: rows.slice(start, start + PAGE_SIZE)
+    };
+  }
+
+  function renderNoRows(body, colCount) {
+    body.innerHTML = '<tr><td colspan="' + colCount + '">No records found.</td></tr>';
+  }
+
+  function getFilteredRegistrations() {
+    const q = (registrationsSearch && registrationsSearch.value || '').trim().toLowerCase();
+    return state.tables.registrations.rows.filter(function (row) {
+      if (!q) return true;
+      const hay = [row.first_name, row.last_name, row.email, row.phone, row.company, row.role, row.use_case].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  function getFilteredContacts() {
+    const q = (contactsSearch && contactsSearch.value || '').trim().toLowerCase();
+    return state.tables.contacts.rows.filter(function (row) {
+      if (!q) return true;
+      const hay = [row.name, row.email, row.company, row.message].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  function getFilteredCareers() {
+    const q = (careersSearch && careersSearch.value || '').trim().toLowerCase();
+    const roleFilter = careersRoleFilter ? careersRoleFilter.value : 'all';
+    return state.tables.careers.rows.filter(function (row) {
+      const roleOk = roleFilter === 'all' || (row.role_applied || '') === roleFilter;
+      if (!roleOk) return false;
+      if (!q) return true;
+      const hay = [row.first_name, row.last_name, row.email, row.role_applied, row.university, row.degree].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  function renderRegistrationsTable() {
+    const filtered = getFilteredRegistrations();
+    const paged = pageSlice(filtered, state.tables.registrations.page);
+    state.tables.registrations.page = paged.page;
+
+    if (!paged.rows.length) {
+      renderNoRows(registrationsBody, 6);
+    } else {
+      registrationsBody.innerHTML = paged.rows.map(function (row) {
+        return '<tr>' +
+          '<td>' + escapeHtml((row.first_name || '') + ' ' + (row.last_name || '')) + '</td>' +
+          '<td>' + escapeHtml(row.email || '-') + '</td>' +
+          '<td>' + escapeHtml(row.phone || '-') + '</td>' +
+          '<td>' + escapeHtml(row.company || '-') + '</td>' +
+          '<td>' + escapeHtml(row.role || '-') + '</td>' +
+          '<td>' + escapeHtml(formatDate(row.registered_at)) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    registrationsPageInfo.textContent = 'Page ' + paged.page + ' of ' + paged.totalPages + ' • ' + filtered.length + ' results';
+    registrationsPrevBtn.disabled = paged.page <= 1;
+    registrationsNextBtn.disabled = paged.page >= paged.totalPages;
+  }
+
+  function renderContactsTable() {
+    const filtered = getFilteredContacts();
+    const paged = pageSlice(filtered, state.tables.contacts.page);
+    state.tables.contacts.page = paged.page;
+
+    if (!paged.rows.length) {
+      renderNoRows(contactsBody, 5);
+    } else {
+      contactsBody.innerHTML = paged.rows.map(function (row) {
+        return '<tr>' +
+          '<td>' + escapeHtml(row.name || '-') + '</td>' +
+          '<td>' + escapeHtml(row.email || '-') + '</td>' +
+          '<td>' + escapeHtml(row.company || '-') + '</td>' +
+          '<td>' + escapeHtml(row.message || '-') + '</td>' +
+          '<td>' + escapeHtml(formatDate(row.sent_at)) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    contactsPageInfo.textContent = 'Page ' + paged.page + ' of ' + paged.totalPages + ' • ' + filtered.length + ' results';
+    contactsPrevBtn.disabled = paged.page <= 1;
+    contactsNextBtn.disabled = paged.page >= paged.totalPages;
+  }
+
+  function renderCareersTable() {
+    const filtered = getFilteredCareers();
+    const paged = pageSlice(filtered, state.tables.careers.page);
+    state.tables.careers.page = paged.page;
+
+    if (!paged.rows.length) {
+      renderNoRows(careersBody, 7);
+    } else {
+      careersBody.innerHTML = paged.rows.map(function (row) {
+        return '<tr>' +
+          '<td>' + escapeHtml((row.first_name || '') + ' ' + (row.last_name || '')) + '</td>' +
+          '<td>' + escapeHtml(row.email || '-') + '</td>' +
+          '<td>' + escapeHtml(row.role_applied || '-') + '</td>' +
+          '<td>' + escapeHtml(row.university || '-') + '</td>' +
+          '<td>' + escapeHtml(row.degree || '-') + '</td>' +
+          '<td>' + escapeHtml(row.graduation_year || '-') + '</td>' +
+          '<td>' + escapeHtml(formatDate(row.applied_at)) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    careersPageInfo.textContent = 'Page ' + paged.page + ' of ' + paged.totalPages + ' • ' + filtered.length + ' results';
+    careersPrevBtn.disabled = paged.page <= 1;
+    careersNextBtn.disabled = paged.page >= paged.totalPages;
+  }
+
+  function renderTables() {
+    renderRegistrationsTable();
+    renderContactsTable();
+    renderCareersTable();
   }
 
   async function loadDashboard() {
@@ -108,38 +483,30 @@
     statCareers.textContent = stats.totals.careers;
     statAll.textContent = stats.totals.allRequests;
 
-    renderRows(registrationsBody, registrations.data || [], function (row) {
-      return '<tr>' +
-        '<td>' + (row.first_name || '') + ' ' + (row.last_name || '') + '</td>' +
-        '<td>' + (row.email || '-') + '</td>' +
-        '<td>' + (row.phone || '-') + '</td>' +
-        '<td>' + (row.company || '-') + '</td>' +
-        '<td>' + (row.role || '-') + '</td>' +
-        '<td>' + formatDate(row.registered_at) + '</td>' +
-      '</tr>';
-    });
+    // Update global totals for composer preview
+    totals = {
+      registrations: stats.totals.registrations || 0,
+      contacts: stats.totals.contacts || 0,
+      careers: stats.totals.careers || 0,
+      allRequests: stats.totals.allRequests || 0
+    };
 
-    renderRows(contactsBody, contacts.data || [], function (row) {
-      return '<tr>' +
-        '<td>' + (row.name || '-') + '</td>' +
-        '<td>' + (row.email || '-') + '</td>' +
-        '<td>' + (row.company || '-') + '</td>' +
-        '<td>' + (row.message || '-') + '</td>' +
-        '<td>' + formatDate(row.sent_at) + '</td>' +
-      '</tr>';
+    // Update audience count displays
+    ['registrations', 'contacts', 'careers'].forEach(function (type) {
+      const el = document.getElementById('audienceCount-' + type);
+      if (el) el.textContent = totals[type];
     });
+    const el = document.getElementById('audienceCount-all');
+    if (el) el.textContent = totals.allRequests;
 
-    renderRows(careersBody, careers.data || [], function (row) {
-      return '<tr>' +
-        '<td>' + (row.first_name || '') + ' ' + (row.last_name || '') + '</td>' +
-        '<td>' + (row.email || '-') + '</td>' +
-        '<td>' + (row.role_applied || '-') + '</td>' +
-        '<td>' + (row.university || '-') + '</td>' +
-        '<td>' + (row.degree || '-') + '</td>' +
-        '<td>' + (row.graduation_year || '-') + '</td>' +
-        '<td>' + formatDate(row.applied_at) + '</td>' +
-      '</tr>';
-    });
+    state.tables.registrations.rows = registrations.data || [];
+    state.tables.contacts.rows = contacts.data || [];
+    state.tables.careers.rows = careers.data || [];
+    state.tables.registrations.page = 1;
+    state.tables.contacts.page = 1;
+    state.tables.careers.page = 1;
+
+    renderTables();
   }
 
   function switchTab(tab) {
@@ -150,6 +517,9 @@
       panel.classList.toggle('hidden', panel.id !== 'panel-' + tab);
     });
     pageTitle.textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+    if (pageSubtitle) {
+      pageSubtitle.textContent = subtitleByTab[tab] || subtitleByTab.overview;
+    }
   }
 
   function showApp() {
@@ -165,9 +535,12 @@
   async function bootstrap() {
     apiBaseInput.value = state.apiBase;
 
+    const savedTheme = localStorage.getItem('qaulium_admin_theme') || 'light';
+    setTheme(savedTheme);
+    applyTemplate();
+
     if (!state.token) {
       showLogin();
-      applyTemplate();
       return;
     }
 
@@ -175,7 +548,6 @@
       await request('/api/admin/me', { headers: authHeaders() });
       showApp();
       await loadDashboard();
-      applyTemplate();
     } catch (e) {
       localStorage.removeItem('qaulium_admin_token');
       state.token = '';
@@ -220,21 +592,171 @@
     });
   });
 
-  audience.addEventListener('change', function () {
-    customEmailsWrap.classList.toggle('hidden', audience.value !== 'custom');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', async function () {
+      if (!state.token) return;
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Refreshing...';
+      try {
+        await loadDashboard();
+      } catch (err) {
+        // no-op
+      }
+      refreshBtn.textContent = 'Refresh Data';
+      refreshBtn.disabled = false;
+    });
+  }
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', function () {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+  }
+
+  registrationsSearch.addEventListener('input', function () {
+    state.tables.registrations.page = 1;
+    renderRegistrationsTable();
+  });
+  contactsSearch.addEventListener('input', function () {
+    state.tables.contacts.page = 1;
+    renderContactsTable();
+  });
+  careersSearch.addEventListener('input', function () {
+    state.tables.careers.page = 1;
+    renderCareersTable();
+  });
+  careersRoleFilter.addEventListener('change', function () {
+    state.tables.careers.page = 1;
+    renderCareersTable();
   });
 
-  middleContent.addEventListener('input', function () {
-    const def = templates[template.value] || templates.blank;
-    emailBody.value = def.body.replace('{{CONTENT}}', middleContent.value || 'Write your message here.');
+  registrationsPrevBtn.addEventListener('click', function () {
+    state.tables.registrations.page -= 1;
+    renderRegistrationsTable();
+  });
+  registrationsNextBtn.addEventListener('click', function () {
+    state.tables.registrations.page += 1;
+    renderRegistrationsTable();
+  });
+  contactsPrevBtn.addEventListener('click', function () {
+    state.tables.contacts.page -= 1;
+    renderContactsTable();
+  });
+  contactsNextBtn.addEventListener('click', function () {
+    state.tables.contacts.page += 1;
+    renderContactsTable();
+  });
+  careersPrevBtn.addEventListener('click', function () {
+    state.tables.careers.page -= 1;
+    renderCareersTable();
+  });
+  careersNextBtn.addEventListener('click', function () {
+    state.tables.careers.page += 1;
+    renderCareersTable();
   });
 
-  template.addEventListener('change', applyTemplate);
-  regenerateTemplate.addEventListener('click', applyTemplate);
+  registrationsExportBtn.addEventListener('click', function () {
+    const rows = getFilteredRegistrations();
+    downloadCsv('registrations.csv',
+      ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Role', 'Use Case', 'Registered At'],
+      rows.map(function (r) { return [r.first_name, r.last_name, r.email, r.phone, r.company, r.role, r.use_case, r.registered_at]; })
+    );
+  });
+
+  contactsExportBtn.addEventListener('click', function () {
+    const rows = getFilteredContacts();
+    downloadCsv('contacts.csv',
+      ['Name', 'Email', 'Company', 'Message', 'Sent At'],
+      rows.map(function (r) { return [r.name, r.email, r.company, r.message, r.sent_at]; })
+    );
+  });
+
+  careersExportBtn.addEventListener('click', function () {
+    const rows = getFilteredCareers();
+    downloadCsv('careers.csv',
+      ['First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Location', 'University', 'Degree', 'Graduation Year', 'Availability', 'LinkedIn', 'Portfolio', 'Resume URL', 'Applied At'],
+      rows.map(function (r) {
+        return [r.first_name, r.last_name, r.email, r.phone, r.role_applied, r.location, r.university, r.degree, r.graduation_year, r.availability, r.linkedin_url, r.portfolio_url, r.resume_url, r.applied_at];
+      })
+    );
+  });
+
+  // Audience radio button listeners
+  document.querySelectorAll('input[name="audience"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      customEmailsWrap.classList.toggle('hidden', this.value !== 'custom');
+      updatePreview();
+    });
+  });
+
+  // Custom emails input hint
+  if (customEmails) {
+    customEmails.addEventListener('input', function () {
+      const count = this.value.split(',').filter(function (e) { return e.trim(); }).length;
+      if (customEmailsHint) {
+        customEmailsHint.textContent = count > 0 ? `${count} email${count !== 1 ? 's' : ''} will be sent` : '';
+      }
+    });
+  }
+
+  // Middle content and updates
+  if (middleContent) {
+    middleContent.addEventListener('input', function () {
+      const templateValue = document.querySelector('input[name="template"]:checked')?.value || 'blank';
+      const def = templates[templateValue] || templates.blank;
+      emailBody.value = def.body.replace('{{CONTENT}}', this.value || 'Your message here.');
+      updatePreview();
+      
+      // Update body hint
+      const wordCount = this.value.trim().split(/\s+/).filter(function(w) { return w; }).length;
+      if (bodyHint) {
+        bodyHint.textContent = wordCount > 0 ? `${wordCount} word${wordCount !== 1 ? 's' : ''}` : '';
+      }
+    });
+  }
+
+  // Subject line hint
+  if (emailSubject) {
+    emailSubject.addEventListener('input', function () {
+      if (subjectHint) {
+        subjectHint.textContent = this.value.length > 0 ? `${this.value.length} character${this.value.length !== 1 ? 's' : ''}` : '';
+      }
+      updatePreview();
+    });
+  }
+
+  if (emailBody) emailBody.addEventListener('input', updatePreview);
+  
+  // Template radio button listeners
+  document.querySelectorAll('input[name="template"]').forEach(function (radio) {
+    radio.addEventListener('change', applyTemplate);
+  });
+  
+  if (regenerateTemplate) regenerateTemplate.addEventListener('click', applyTemplate);
+
+  // Save draft functionality
+  if (saveDraftBtn) {
+    saveDraftBtn.addEventListener('click', function () {
+      const draft = {
+        template: document.querySelector('input[name="template"]:checked')?.value || 'blank',
+        audience: document.querySelector('input[name="audience"]:checked')?.value || 'all',
+        subject: emailSubject.value,
+        body: middleContent.value,
+        customEmails: customEmails.value
+      };
+      localStorage.setItem('qaulium_admin_draft', JSON.stringify(draft));
+      setStatus(composerStatus, 'Draft saved locally', 'ok');
+      setTimeout(function () {
+        composerStatus.innerHTML = '';
+      }, 3000);
+    });
+  }
 
   composerForm.addEventListener('submit', async function (e) {
     e.preventDefault();
     try {
+      const audienceValue = document.querySelector('input[name="audience"]:checked')?.value || 'all';
       const customList = customEmails.value
         .split(',')
         .map(function (v) { return v.trim(); })
@@ -244,14 +766,16 @@
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({
-          audience: audience.value,
+          audience: audienceValue,
           subject: emailSubject.value.trim(),
           body: emailBody.value,
           customEmails: customList
         })
       });
 
-      setStatus(composerStatus, 'Email sent to ' + data.sent + ' recipients.', 'ok');
+      setStatus(composerStatus, `✓ Email sent to ${data.sent} recipient${data.sent !== 1 ? 's' : ''}.`, 'ok');
+      // Clear draft on successful send
+      localStorage.removeItem('qaulium_admin_draft');
     } catch (err) {
       setStatus(composerStatus, err.message, 'err');
     }

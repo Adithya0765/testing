@@ -11,12 +11,16 @@
 </head>
 <body>
   <div id="loginView" class="auth-shell">
+    <div class="auth-bg-shape auth-bg-shape-a"></div>
+    <div class="auth-bg-shape auth-bg-shape-b"></div>
     <div class="auth-card">
       <div class="brand-row">
-        <img src="../logo-white.png" alt="Qaulium AI" class="brand-logo">
-        <h1>Qaulium AI Admin</h1>
+        <svg width="40" height="40" viewBox="0 0 40 40" class="brand-logo" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="8" fill="#0A0A0A"/>
+          <text x="50%" y="50%" font-size="24" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Q</text>
+        </svg>
+        <span style="font-size: 14px; font-weight: 600; color: var(--text);">Qaulium AI</span>
       </div>
-      <p class="muted">Secure access for registrations, contacts, careers, and communication.</p>
       <form id="loginForm" class="stack">
         <label>
           API Base URL
@@ -30,7 +34,7 @@
           Password
           <input type="password" id="adminPassword" required>
         </label>
-        <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+        <button type="submit" class="btn btn-primary" id="loginBtn">Access Console</button>
       </form>
       <div id="loginStatus" class="status"></div>
     </div>
@@ -39,7 +43,10 @@
   <div id="appView" class="app-shell hidden">
     <aside class="sidebar">
       <div class="brand-row">
-        <img src="../logo-white.png" alt="Qaulium AI" class="brand-logo">
+        <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="8" fill="#0A0A0A"/>
+          <text x="50%" y="50%" font-size="24" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">Q</text>
+        </svg>
         <h2>Admin Console</h2>
       </div>
       <nav class="menu">
@@ -49,7 +56,11 @@
         <button class="menu-item" data-tab="careers">Careers</button>
         <button class="menu-item" data-tab="composer">Email Composer</button>
       </nav>
-      <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+      <div class="sidebar-actions">
+        <button class="btn btn-secondary" id="refreshBtn">Refresh Data</button>
+        <button class="btn btn-secondary" id="themeToggle">Theme</button>
+        <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+      </div>
     </aside>
 
     <main class="content">
@@ -67,79 +78,231 @@
           <div class="stat-card"><h3>Careers</h3><p id="statCareers">0</p></div>
           <div class="stat-card"><h3>Total Requests</h3><p id="statAll">0</p></div>
         </div>
+        <div class="overview-note">
+          <h3>Operational Summary</h3>
+          <p>Use this dashboard to monitor lead flow across registrations, contact inquiries, and internship applications. Move to Email Composer for offer letters, updates, and professional communication.</p>
+        </div>
       </section>
 
       <section class="tab-panel hidden" id="panel-registrations">
+        <div class="panel-toolbar">
+          <input type="text" id="registrationsSearch" placeholder="Search name, email, company, role...">
+          <button class="btn btn-secondary" id="registrationsExportBtn">Export CSV</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Company</th><th>Role</th><th>Date</th></tr></thead>
             <tbody id="registrationsBody"></tbody>
           </table>
         </div>
+        <div class="pagination-bar">
+          <button class="btn btn-secondary" id="registrationsPrevBtn">Previous</button>
+          <span id="registrationsPageInfo" class="muted">Page 1</span>
+          <button class="btn btn-secondary" id="registrationsNextBtn">Next</button>
+        </div>
       </section>
 
       <section class="tab-panel hidden" id="panel-contacts">
+        <div class="panel-toolbar">
+          <input type="text" id="contactsSearch" placeholder="Search name, email, company, message...">
+          <button class="btn btn-secondary" id="contactsExportBtn">Export CSV</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Message</th><th>Date</th></tr></thead>
             <tbody id="contactsBody"></tbody>
           </table>
         </div>
+        <div class="pagination-bar">
+          <button class="btn btn-secondary" id="contactsPrevBtn">Previous</button>
+          <span id="contactsPageInfo" class="muted">Page 1</span>
+          <button class="btn btn-secondary" id="contactsNextBtn">Next</button>
+        </div>
       </section>
 
       <section class="tab-panel hidden" id="panel-careers">
+        <div class="panel-toolbar">
+          <input type="text" id="careersSearch" placeholder="Search name, email, role, university...">
+          <select id="careersRoleFilter">
+            <option value="all">All Roles</option>
+            <option value="AI Intern">AI Intern</option>
+            <option value="Frontend Intern">Frontend Intern</option>
+            <option value="Backend Intern">Backend Intern</option>
+            <option value="UI/UX Intern">UI/UX Intern</option>
+            <option value="Testing Intern">Testing Intern</option>
+            <option value="Marketing Intern">Marketing Intern</option>
+            <option value="Research Intern">Research Intern</option>
+          </select>
+          <button class="btn btn-secondary" id="careersExportBtn">Export CSV</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>University</th><th>Degree</th><th>Grad Year</th><th>Date</th></tr></thead>
             <tbody id="careersBody"></tbody>
           </table>
         </div>
+        <div class="pagination-bar">
+          <button class="btn btn-secondary" id="careersPrevBtn">Previous</button>
+          <span id="careersPageInfo" class="muted">Page 1</span>
+          <button class="btn btn-secondary" id="careersNextBtn">Next</button>
+        </div>
       </section>
 
       <section class="tab-panel hidden" id="panel-composer">
         <form id="composerForm" class="composer-card">
-          <div class="form-grid">
-            <label>Audience
-              <select id="audience">
-                <option value="all">All Members</option>
-                <option value="registrations">Registrations</option>
-                <option value="contacts">Contacts</option>
-                <option value="careers">Career Applicants</option>
-                <option value="custom">Custom Emails</option>
-              </select>
-            </label>
-            <label>Template
-              <select id="template">
-                <option value="internship-offer">Internship Offer Letter</option>
-                <option value="interview-invite">Interview Invitation</option>
-                <option value="profile-followup">Profile Follow-up</option>
-                <option value="company-update">Company Update</option>
-                <option value="blank">Blank Professional Format</option>
-              </select>
-            </label>
+          <div class="composer-layout">
+            <!-- Left Panel: Editor -->
+            <div class="composer-editor">
+              <!-- Professional Templates Section -->
+              <div class="composer-section">
+                <div class="section-header">
+                  <h3>Professional Templates</h3>
+                  <p>Choose from pre-designed templates or customize</p>
+                </div>
+                <div class="template-grid">
+                  <label class="template-option active">
+                    <input type="radio" name="template" value="registration-welcome" checked>
+                    <div class="template-card">
+                      <div class="template-icon">👋</div>
+                      <div class="template-name">Welcome Registration</div>
+                      <div class="template-desc">Confirm new registrations</div>
+                    </div>
+                  </label>
+                  <label class="template-option">
+                    <input type="radio" name="template" value="interview-invitation">
+                    <div class="template-card">
+                      <div class="template-icon">📅</div>
+                      <div class="template-name">Interview Invitation</div>
+                      <div class="template-desc">Schedule interview with candidates</div>
+                    </div>
+                  </label>
+                  <label class="template-option">
+                    <input type="radio" name="template" value="career-confirmation">
+                    <div class="template-card">
+                      <div class="template-icon">✅</div>
+                      <div class="template-name">Career Confirmation</div>
+                      <div class="template-desc">Confirm job applications received</div>
+                    </div>
+                  </label>
+                  <label class="template-option">
+                    <input type="radio" name="template" value="contact-response">
+                    <div class="template-card">
+                      <div class="template-icon">💬</div>
+                      <div class="template-name">Contact Response</div>
+                      <div class="template-desc">Respond to contact inquiries</div>
+                    </div>
+                  </label>
+                  <label class="template-option">
+                    <input type="radio" name="template" value="company-announcement">
+                    <div class="template-card">
+                      <div class="template-icon">📢</div>
+                      <div class="template-name">Company Announcement</div>
+                      <div class="template-desc">Share updates and announcements</div>
+                    </div>
+                  </label>
+                  <label class="template-option">
+                    <input type="radio" name="template" value="blank">
+                    <div class="template-card">
+                      <div class="template-icon">📝</div>
+                      <div class="template-name">Blank Custom</div>
+                      <div class="template-desc">Start from scratch</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Recipient Selection -->
+              <div class="composer-section">
+                <div class="section-header">
+                  <h3>Recipients</h3>
+                  <p>Choose who receives this email</p>
+                </div>
+                <div class="audience-grid">
+                  <label class="audience-option">
+                    <input type="radio" name="audience" value="all" checked>
+                    <div class="audience-card">
+                      <div class="audience-label">All Members</div>
+                      <div id="audienceCount-all" class="audience-count">—</div>
+                    </div>
+                  </label>
+                  <label class="audience-option">
+                    <input type="radio" name="audience" value="registrations">
+                    <div class="audience-card">
+                      <div class="audience-label">Registrations</div>
+                      <div id="audienceCount-registrations" class="audience-count">—</div>
+                    </div>
+                  </label>
+                  <label class="audience-option">
+                    <input type="radio" name="audience" value="contacts">
+                    <div class="audience-card">
+                      <div class="audience-label">Contacts</div>
+                      <div id="audienceCount-contacts" class="audience-count">—</div>
+                    </div>
+                  </label>
+                  <label class="audience-option">
+                    <input type="radio" name="audience" value="careers">
+                    <div class="audience-card">
+                      <div class="audience-label">Career Applicants</div>
+                      <div id="audienceCount-careers" class="audience-count">—</div>
+                    </div>
+                  </label>
+                </div>
+
+                <label id="customEmailsWrap" class="hidden custom-emails-label">
+                  Custom Recipient List
+                  <textarea id="customEmails" rows="4" placeholder="admin@example.com&#10;user@example.com&#10;candidate@example.com" spellcheck="false"></textarea>
+                  <div class="custom-emails-hint" id="customEmailsHint"></div>
+                </label>
+              </div>
+
+              <!-- Email Content -->
+              <div class="composer-section">
+                <div class="section-header">
+                  <h3>Email Content</h3>
+                  <p>Customize your message</p>
+                </div>
+
+                <label>Subject Line
+                  <input type="text" id="emailSubject" placeholder="Professional subject line..." required>
+                  <div class="input-hint" id="subjectHint"></div>
+                </label>
+
+                <label>Email Body
+                  <textarea id="middleContent" rows="10" placeholder="Write the main body of your email here..." required spellcheck="true"></textarea>
+                  <div class="input-hint" id="bodyHint"></div>
+                </label>
+              </div>
+
+              <input type="hidden" id="emailBody" required>
+
+              <!-- Action Buttons -->
+              <div class="composer-actions">
+                <button type="button" class="btn btn-secondary" id="regenerateTemplate">Regenerate Template</button>
+                <button type="button" class="btn btn-secondary" id="saveDraftBtn">Save as Draft</button>
+                <button type="submit" class="btn btn-primary" id="sendEmailBtn">Send Email</button>
+              </div>
+              <div id="composerStatus" class="status"></div>
+            </div>
+
+            <!-- Right Panel: Preview -->
+            <div class="composer-preview">
+              <div class="preview-header">
+                <h3>Live Email Preview</h3>
+                <p>See how your email will look</p>
+              </div>
+              <div class="preview-info">
+                <div class="preview-item">
+                  <span class="preview-label">Subject:</span>
+                  <span id="previewSubject" class="preview-value">—</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Recipients:</span>
+                  <span id="previewRecipients" class="preview-value">—</span>
+                </div>
+              </div>
+              <iframe id="emailPreviewFrame" title="Email Preview"></iframe>
+            </div>
           </div>
-
-          <label id="customEmailsWrap" class="hidden">Custom Emails (comma separated)
-            <textarea id="customEmails" rows="2" placeholder="user1@mail.com, user2@mail.com"></textarea>
-          </label>
-
-          <label>Email Subject
-            <input type="text" id="emailSubject" required>
-          </label>
-
-          <label>Middle Content (your custom matter)
-            <textarea id="middleContent" rows="5" placeholder="Write your message here..." required></textarea>
-          </label>
-
-          <label>Final Email HTML Preview/Editor
-            <textarea id="emailBody" rows="14" required></textarea>
-          </label>
-
-          <div class="composer-actions">
-            <button type="button" class="btn btn-secondary" id="regenerateTemplate">Regenerate Template</button>
-            <button type="submit" class="btn btn-primary" id="sendEmailBtn">Send Email</button>
-          </div>
-          <div id="composerStatus" class="status"></div>
         </form>
       </section>
     </main>

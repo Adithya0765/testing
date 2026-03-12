@@ -5,3 +5,5 @@ qualium.db-shm
 qualium.db-wal
 logo-b64.txt
 *.bak
+.vercel
+.env*.local

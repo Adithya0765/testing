@@ -452,8 +452,17 @@ function buildContactNotificationEmail(name, email, company, message) {
 <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 
 <tr>
-<td style="background-color:#0A0A0A;padding:24px 40px;border-radius:12px 12px 0 0;">
-<span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">Qaulium AI</span>
+<td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td>
+<img src="cid:qualium-logo" alt="Qaulium AI" height="36" style="display:block;height:36px;width:auto;border:0;">
+</td>
+<td align="right" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;color:#888888;letter-spacing:0.05em;text-transform:uppercase;">
+New Contact Message
+</td>
+</tr>
+</table>
 </td>
 </tr>
 
@@ -471,33 +480,15 @@ function buildContactNotificationEmail(name, email, company, message) {
 </tr>
 
 <tr>
-<td style="background-color:#ffffff;padding:16px 40px;">
-<p style="margin:0 0 12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;color:#374151;line-height:1.6;">
-If you have questions, reply to this email or reach us at <a href="mailto:admin@qauliumai.in" style="color:#2563EB;text-decoration:none;font-weight:500;">admin@qauliumai.in</a> or visit <a href="https://qauliumai.in" style="color:#2563EB;text-decoration:none;font-weight:500;">qauliumai.in</a>.
-</p>
-
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 0;">
+<td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr>
-<td align="left" style="padding-top:8px;">
-    <a href="https://discord.gg/gUnhDhh2" style="display:inline-block;margin-right:12px;text-decoration:none;" target="_blank">
-        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" width="20" height="20" alt="Discord" style="vertical-align:middle;">
-    </a>
-    <a href="https://www.linkedin.com/company/qalium-ai" style="display:inline-block;margin-right:12px;text-decoration:none;" target="_blank">
-        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg" width="20" height="20" alt="LinkedIn" style="vertical-align:middle;">
-    </a>
-    <a href="https://qauliumai.in" style="display:inline-block;text-decoration:none;" target="_blank">
-        <img src="https://img.icons8.com/material-rounded/48/000000/globe--v1.png" width="20" height="20" alt="Website" style="vertical-align:middle;">
-    </a>
+<td style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;color:#888888;line-height:1.5;">
+&copy; 2026 Qaulium AI. All rights reserved.<br>
+Amaravati, Andhra Pradesh, India
 </td>
 </tr>
 </table>
-
-</td>
-</tr>
-
-<tr>
-<td style="background-color:#0A0A0A;padding:20px 40px;border-radius:0 0 12px 12px;">
-<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
 </td>
 </tr>
 
@@ -662,8 +653,17 @@ function buildCareerApplicationNotificationEmail(data) {
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 <tr>
-<td style="background-color:#0A0A0A;padding:24px 40px;border-radius:12px 12px 0 0;">
-<span style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">Qaulium AI Careers</span>
+<td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td>
+<img src="cid:qualium-logo" alt="Qaulium AI" height="36" style="display:block;height:36px;width:auto;border:0;">
+</td>
+<td align="right" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;color:#888888;letter-spacing:0.05em;text-transform:uppercase;">
+New Application
+</td>
+</tr>
+</table>
 </td>
 </tr>
 <tr>
@@ -688,8 +688,15 @@ function buildCareerApplicationNotificationEmail(data) {
 </td>
 </tr>
 <tr>
-<td style="background-color:#0A0A0A;padding:20px 40px;border-radius:0 0 12px 12px;">
-<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
+<td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;color:#888888;line-height:1.5;">
+&copy; 2026 Qaulium AI. All rights reserved.<br>
+Amaravati, Andhra Pradesh, India
+</td>
+</tr>
+</table>
 </td>
 </tr>
 </table>
@@ -852,7 +859,12 @@ app.post('/api/contact', async (req, res) => {
                         from: SMTP_FROM,
                         to: process.env.CONTACT_EMAIL || 'admin@qauliumai.in',
                         subject: `Contact Form: ${safeName} — Qaulium AI`,
-                        html: buildContactNotificationEmail(safeName, safeEmail, safeCompany, safeMessage)
+                        html: buildContactNotificationEmail(safeName, safeEmail, safeCompany, safeMessage),
+                        attachments: [{
+                            filename: 'logo-white.png',
+                            path: LOGO_PATH,
+                            cid: 'qualium-logo'
+                        }]
                     }),
                     transporter.sendMail({
                         from: SMTP_FROM,
@@ -1001,7 +1013,12 @@ app.post('/api/careers/apply', async (req, res) => {
                         from: SMTP_FROM,
                         to: process.env.CONTACT_EMAIL || 'admin@qauliumai.in',
                         subject: `Career Application: ${safeData.firstName} ${safeData.lastName} — ${safeData.roleApplied}`,
-                        html: buildCareerApplicationNotificationEmail(safeData)
+                        html: buildCareerApplicationNotificationEmail(safeData),
+                        attachments: [{
+                            filename: 'logo-white.png',
+                            path: LOGO_PATH,
+                            cid: 'qualium-logo'
+                        }]
                     }),
                     transporter.sendMail({
                         from: SMTP_FROM,
@@ -1195,7 +1212,12 @@ app.post('/api/admin/email/send', requireAdminAuth, async (req, res) => {
                 to: process.env.CONTACT_EMAIL || 'admin@qauliumai.in',
                 bcc: chunk,
                 subject: String(subject).trim(),
-                html: String(body)
+                html: String(body),
+                attachments: [{
+                    filename: 'logo-white.png',
+                    path: LOGO_PATH,
+                    cid: 'qualium-logo'
+                }]
             });
         }
 
