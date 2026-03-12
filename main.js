@@ -291,7 +291,10 @@
         '.section-intro',
         '.section-label',
         '.cta-banner',
-        '.usecase-card'
+        '.usecase-card',
+        '.careers-value-card',
+        '.role-card',
+        '.careers-apply-wrap'
     ];
 
     var elements = document.querySelectorAll(revealTargets.join(','));
@@ -372,21 +375,23 @@
         document.body.style.overflow = '';
     }
 
-    modalClose.addEventListener('click', closeModal);
+    if (modalClose && registerModal) {
+        modalClose.addEventListener('click', closeModal);
 
-    registerModal.addEventListener('click', function (e) {
-        if (e.target === registerModal) closeModal();
-    });
+        registerModal.addEventListener('click', function (e) {
+            if (e.target === registerModal) closeModal();
+        });
 
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && registerModal.classList.contains('open')) {
-            closeModal();
-        }
-    });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && registerModal.classList.contains('open')) {
+                closeModal();
+            }
+        });
+    }
 
     // Wire up registration buttons (nav CTA + hero buttons that lead to registration)
     var tryStudioBtn = document.querySelector('a[href="#developer"].btn-secondary');
-    if (tryStudioBtn) {
+    if (tryStudioBtn && registerModal) {
         tryStudioBtn.addEventListener('click', function (e) {
             e.preventDefault();
             openModal();
@@ -394,7 +399,7 @@
     }
 
     var navCtaBtn = document.querySelector('.nav-cta');
-    if (navCtaBtn) {
+    if (navCtaBtn && registerModal) {
         navCtaBtn.addEventListener('click', function (e) {
             e.preventDefault();
             openModal();
@@ -403,7 +408,7 @@
 
     // Also wire up the CTA banner button
     var ctaBannerBtn = document.querySelector('.cta-banner .btn');
-    if (ctaBannerBtn) {
+    if (ctaBannerBtn && registerModal) {
         ctaBannerBtn.addEventListener('click', function (e) {
             e.preventDefault();
             openModal();
@@ -479,8 +484,83 @@
     }
 
     function showStatus(message, type) {
+        if (!formStatus) return;
         formStatus.textContent = message;
         formStatus.className = 'form-status ' + type;
+    }
+
+    // --- Careers form ---
+    var careerForm = document.getElementById('careerForm');
+    var careerFormStatus = document.getElementById('careerFormStatus');
+    var careerApplyBtn = document.getElementById('careerApplyBtn');
+
+    function showCareerStatus(message, type) {
+        if (!careerFormStatus) return;
+        careerFormStatus.textContent = message;
+        careerFormStatus.className = 'form-status ' + type;
+    }
+
+    if (careerForm) {
+        careerForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            var payload = {
+                firstName: document.getElementById('careerFirstName').value.trim(),
+                lastName: document.getElementById('careerLastName').value.trim(),
+                email: document.getElementById('careerEmail').value.trim(),
+                phone: document.getElementById('careerPhone').value.trim(),
+                roleApplied: document.getElementById('careerRole').value,
+                experienceYears: document.getElementById('careerExperience').value.trim(),
+                location: document.getElementById('careerLocation').value.trim(),
+                currentCompany: document.getElementById('careerCompany').value.trim(),
+                linkedinUrl: document.getElementById('careerLinkedIn').value.trim(),
+                portfolioUrl: document.getElementById('careerPortfolio').value.trim(),
+                resumeUrl: document.getElementById('careerResume').value.trim(),
+                coverLetter: document.getElementById('careerCoverLetter').value.trim()
+            };
+
+            if (!payload.firstName || !payload.lastName || !payload.email || !payload.phone || !payload.roleApplied || !payload.experienceYears || !payload.location || !payload.resumeUrl || !payload.coverLetter) {
+                showCareerStatus('Please fill all required fields before submitting.', 'error');
+                return;
+            }
+
+            var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(payload.email)) {
+                showCareerStatus('Please enter a valid email address.', 'error');
+                return;
+            }
+
+            if (careerApplyBtn) {
+                careerApplyBtn.textContent = 'Submitting...';
+                careerApplyBtn.disabled = true;
+            }
+
+            fetch('/api/careers/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    showCareerStatus('Application submitted successfully. A confirmation email has been sent to ' + payload.email + '.', 'success');
+                    careerForm.reset();
+                } else {
+                    showCareerStatus(data.message || 'Unable to submit application right now. Please try again.', 'error');
+                }
+                if (careerApplyBtn) {
+                    careerApplyBtn.textContent = 'Submit Application';
+                    careerApplyBtn.disabled = false;
+                }
+            })
+            .catch(function () {
+                showCareerStatus('Unable to connect to server. Please try again later.', 'error');
+                if (careerApplyBtn) {
+                    careerApplyBtn.textContent = 'Submit Application';
+                    careerApplyBtn.disabled = false;
+                }
+            });
+        });
     }
 
     // --- Contact form ---

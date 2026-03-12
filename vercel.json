@@ -2,7 +2,8 @@
   "framework": null,
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/careers", "destination": "/careers.html" }
   ],
   "functions": {
     "api/index.js": {

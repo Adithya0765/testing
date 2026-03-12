@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Careers - Qaulium AI</title>
+    <meta name="description" content="Join Qaulium AI. Explore open roles across AI, frontend, backend, UI/UX, testing, marketing, and research.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="256x256" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body>
+
+    <header class="site-header" id="siteHeader">
+        <nav class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <img class="logo-mark" src="logo-white.png" alt="Qaulium AI" height="36">
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html#architecture">Platform</a></li>
+                <li><a href="hardware.html">Hardware</a></li>
+                <li><a href="index.html#developer">Developer</a></li>
+                <li><a href="index.html#research">Research</a></li>
+                <li><a href="careers.html" class="active">Careers</a></li>
+                <li><a href="index.html#contact" class="nav-cta">Contact Us</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <svg class="theme-icon theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg class="theme-icon theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu">
+                <span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html#architecture">Platform</a></li>
+            <li><a href="hardware.html">Hardware</a></li>
+            <li><a href="index.html#developer">Developer</a></li>
+            <li><a href="index.html#research">Research</a></li>
+            <li><a href="careers.html">Careers</a></li>
+            <li><a href="index.html#contact">Contact Us</a></li>
+        </ul>
+    </div>
+
+    <main>
+        <section class="hero careers-hero" id="careersHero">
+            <div class="container">
+                <div class="hero-content">
+                    <p class="hero-eyebrow">Careers at Qaulium AI</p>
+                    <h1 class="hero-headline">Build The Future Of Quantum + AI</h1>
+                    <p class="hero-sub">We are building software-defined quantum infrastructure for real-world impact. Join a focused team solving deep technical problems across product, research, and go-to-market.</p>
+                    <div class="hero-actions">
+                        <a href="#openRoles" class="btn btn-primary">View Open Roles <span class="btn-icon">&rarr;</span></a>
+                        <a href="#applyNow" class="btn btn-secondary">Apply Now</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-about-company" id="aboutCompany">
+            <div class="container">
+                <div class="section-label">About Qaulium AI</div>
+                <h2 class="section-heading">Why Work With Us</h2>
+                <p class="section-intro">Qaulium AI combines quantum engineering, developer tooling, and AI systems to create practical platforms that teams can use today. We work fast, ship often, and care deeply about technical quality.</p>
+                <div class="careers-values-grid">
+                    <div class="careers-value-card">
+                        <h3>High Ownership</h3>
+                        <p>You own outcomes end-to-end: design, implementation, launch, and continuous improvement.</p>
+                    </div>
+                    <div class="careers-value-card">
+                        <h3>Deep Technical Work</h3>
+                        <p>From vQPU engines to AI-assisted debugging, you solve meaningful hard problems every week.</p>
+                    </div>
+                    <div class="careers-value-card">
+                        <h3>Global Impact</h3>
+                        <p>Your work helps researchers and engineering teams build the next generation of intelligent systems.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-open-roles" id="openRoles">
+            <div class="container">
+                <div class="section-label">Open Positions</div>
+                <h2 class="section-heading">Current Openings</h2>
+                <p class="section-intro">We are actively hiring interns across engineering, design, quality, growth, and research functions.</p>
+
+                <div class="roles-grid">
+                    <article class="role-card">
+                        <h3>AI Intern</h3>
+                        <p>Support model development for quantum copilots, code intelligence, and developer workflow automation.</p>
+                        <span>Python, LLMs, MLOps</span>
+                    </article>
+                    <article class="role-card">
+                        <h3>Frontend Intern</h3>
+                        <p>Build responsive interfaces and UI components for Qaulium-Studio and developer workflows.</p>
+                        <span>React, TypeScript, Performance</span>
+                    </article>
+                    <article class="role-card">
+                        <h3>Backend Intern</h3>
+                        <p>Contribute to APIs, data models, and backend services powering quantum development tools.</p>
+                        <span>Node.js, APIs, Databases</span>
+                    </article>
+                    <article class="role-card">
+                        <h3>UI/UX Intern</h3>
+                        <p>Design user journeys, wireframes, and interaction patterns for technical product experiences.</p>
+                        <span>Figma, UX Research, Design Systems</span>
+                    </article>
+                    <article class="role-card">
+                        <h3>Testing Intern</h3>
+                        <p>Support QA workflows and automation coverage across frontend, backend, and integration tests.</p>
+                        <span>Automation, CI/CD, Quality Engineering</span>
+                    </article>
+                    <article class="role-card">
+                        <h3>Marketing Intern</h3>
+                        <p>Support content creation, campaign execution, and communication for technical audiences.</p>
+                        <span>Growth, Content, Analytics</span>
+                    </article>
+                    <article class="role-card">
+                        <h3>Research Intern</h3>
+                        <p>Work on quantum algorithms, benchmarking, and software-hardware co-design experiments.</p>
+                        <span>Quantum Computing, Research, Prototyping</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-careers-apply" id="applyNow">
+            <div class="container">
+                <div class="section-label">Apply</div>
+                <h2 class="section-heading">Apply For A Role</h2>
+                <p class="section-intro">Share your details and we will review your application. You will receive a professional confirmation email after applying.</p>
+
+                <div class="careers-apply-wrap">
+                    <form class="career-form" id="careerForm" novalidate>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="careerFirstName">First Name</label>
+                                <input type="text" id="careerFirstName" required autocomplete="given-name">
+                            </div>
+                            <div class="form-group">
+                                <label for="careerLastName">Last Name</label>
+                                <input type="text" id="careerLastName" required autocomplete="family-name">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="careerEmail">Email</label>
+                                <input type="email" id="careerEmail" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="careerPhone">Phone</label>
+                                <input type="tel" id="careerPhone" required autocomplete="tel">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="careerRole">Role Applying For</label>
+                                <select id="careerRole" required>
+                                    <option value="">Select a role</option>
+                                    <option value="AI Intern">AI Intern</option>
+                                    <option value="Frontend Intern">Frontend Intern</option>
+                                    <option value="Backend Intern">Backend Intern</option>
+                                    <option value="UI/UX Intern">UI/UX Intern</option>
+                                    <option value="Testing Intern">Testing Intern</option>
+                                    <option value="Marketing Intern">Marketing Intern</option>
+                                    <option value="Research Intern">Research Intern</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="careerExperience">Years of Experience</label>
+                                <input type="number" id="careerExperience" min="0" max="30" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="careerLocation">Current Location</label>
+                                <input type="text" id="careerLocation" required autocomplete="address-level2">
+                            </div>
+                            <div class="form-group">
+                                <label for="careerCompany">Current Company</label>
+                                <input type="text" id="careerCompany" autocomplete="organization">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="careerLinkedIn">LinkedIn Profile URL</label>
+                            <input type="url" id="careerLinkedIn" placeholder="https://linkedin.com/in/your-profile">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="careerPortfolio">Portfolio / GitHub URL</label>
+                            <input type="url" id="careerPortfolio" placeholder="https://github.com/username">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="careerResume">Resume URL (Drive/Dropbox/Website)</label>
+                            <input type="url" id="careerResume" placeholder="https://..." required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="careerCoverLetter">Cover Letter</label>
+                            <textarea id="careerCoverLetter" rows="6" required placeholder="Tell us why you are a strong fit for this role."></textarea>
+                        </div>
+
+                        <div class="form-status" id="careerFormStatus"></div>
+                        <button type="submit" class="btn btn-primary btn-full" id="careerApplyBtn">Submit Application</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a href="index.html" class="nav-logo">
+                        <img class="logo-mark" src="logo-white.png" alt="Qaulium AI" height="32">
+                    </a>
+                </div>
+                <div class="footer-columns">
+                    <div class="footer-column">
+                        <h4>Platform</h4>
+                        <ul>
+                            <li><a href="index.html#architecture">Qaulium AI Studio</a></li>
+                            <li><a href="hardware.html">Hardware</a></li>
+                            <li><a href="careers.html">Careers</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Company</h4>
+                        <ul>
+                            <li><a href="index.html#contact">Contact</a></li>
+                            <li><a href="careers.html">Open Roles</a></li>
+                            <li><a href="index.html#research">Research</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Qaulium AI, Inc. All rights reserved.</p>
+                <div class="footer-legal">
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                    <a href="#">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>

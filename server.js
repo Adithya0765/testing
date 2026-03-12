@@ -32,6 +32,15 @@ app.use(express.static(path.join(__dirname), {
     extensions: ['html']
 }));
 
+// Explicit careers route for environments where extension fallback is skipped
+app.get('/careers', (req, res) => {
+    res.sendFile(path.join(__dirname, 'careers.html'));
+});
+
+app.get('/careers.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'careers.html'));
+});
+
 // Rate limiting to prevent abuse
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -93,6 +102,25 @@ async function ensurePostgresSchema() {
                     sent_at TIMESTAMPTZ DEFAULT NOW()
                 )
             `);
+
+            await pgQuery(`
+                CREATE TABLE IF NOT EXISTS career_applications (
+                    id SERIAL PRIMARY KEY,
+                    first_name TEXT NOT NULL,
+                    last_name TEXT NOT NULL,
+                    email TEXT NOT NULL,
+                    phone TEXT NOT NULL,
+                    role_applied TEXT NOT NULL,
+                    experience_years INTEGER NOT NULL,
+                    location TEXT NOT NULL,
+                    current_company TEXT DEFAULT '',
+                    linkedin_url TEXT DEFAULT '',
+                    portfolio_url TEXT DEFAULT '',
+                    resume_url TEXT NOT NULL,
+                    cover_letter TEXT NOT NULL,
+                    applied_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
         })();
     }
     await postgresSchemaReady;
@@ -125,6 +153,23 @@ if (HAS_POSTGRES) {
                 company TEXT DEFAULT '',
                 message TEXT NOT NULL,
                 sent_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS career_applications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                first_name TEXT NOT NULL,
+                last_name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                role_applied TEXT NOT NULL,
+                experience_years INTEGER NOT NULL,
+                location TEXT NOT NULL,
+                current_company TEXT DEFAULT '',
+                linkedin_url TEXT DEFAULT '',
+                portfolio_url TEXT DEFAULT '',
+                resume_url TEXT NOT NULL,
+                cover_letter TEXT NOT NULL,
+                applied_at TEXT DEFAULT (datetime('now'))
             );
         `);
     } catch (e) {
@@ -450,6 +495,106 @@ Amaravati, Andhra Pradesh, India
 </html>`;
 }
 
+function buildCareerApplicationConfirmationEmail(firstName, roleApplied) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+<tr>
+<td style="background-color:#0A0A0A;padding:28px 40px;border-radius:12px 12px 0 0;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td>
+<img src="cid:qualium-logo" alt="Qaulium AI" height="36" style="display:block;height:36px;width:auto;border:0;">
+</td>
+<td align="right" style="font-size:12px;color:#888888;letter-spacing:0.05em;text-transform:uppercase;">Application Received</td>
+</tr>
+</table>
+</td>
+</tr>
+
+<tr>
+<td style="background-color:#ffffff;padding:48px 40px;">
+<h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#0A0A0A;letter-spacing:-0.03em;line-height:1.2;">Thank you, ${firstName}.</h1>
+<p style="margin:0 0 28px;font-size:15px;color:#6B7280;line-height:1.65;">We have received your application for the <strong>${roleApplied}</strong> role at Qaulium AI.</p>
+<hr style="border:none;border-top:1px solid #E5E7EB;margin:0 0 28px;">
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">Our hiring team is reviewing your profile and will get back to you with the next steps shortly.</p>
+<p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">If shortlisted, we will reach out to schedule an initial conversation with our team.</p>
+<p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.6;">For questions, contact us at <a href="mailto:admin@qauliumai.in" style="color:#2563EB;text-decoration:none;font-weight:500;">admin@qauliumai.in</a>.</p>
+</td>
+</tr>
+
+<tr>
+<td style="background-color:#0A0A0A;padding:24px 40px;border-radius:0 0 12px 12px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td style="font-size:12px;color:#888888;line-height:1.5;">&copy; 2026 Qaulium AI. All rights reserved.<br>Amaravati, Andhra Pradesh, India</td>
+</tr>
+</table>
+</td>
+</tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+function buildCareerApplicationNotificationEmail(data) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;padding:40px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr>
+<td style="background-color:#0A0A0A;padding:24px 40px;border-radius:12px 12px 0 0;">
+<span style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">Qaulium AI Careers</span>
+</td>
+</tr>
+<tr>
+<td style="background-color:#ffffff;padding:40px;">
+<h2 style="margin:0 0 20px;font-size:22px;color:#0A0A0A;font-weight:600;">New Career Application</h2>
+<table width="100%" style="font-size:14px;color:#374151;line-height:1.7;">
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;width:160px;">Name</td><td style="padding:8px 0;">${data.firstName} ${data.lastName}</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">Email</td><td style="padding:8px 0;">${data.email}</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">Phone</td><td style="padding:8px 0;">${data.phone}</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">Role Applied</td><td style="padding:8px 0;">${data.roleApplied}</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">Experience</td><td style="padding:8px 0;">${data.experienceYears} years</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">Location</td><td style="padding:8px 0;">${data.location}</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">Current Company</td><td style="padding:8px 0;">${data.currentCompany || '-'}</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">LinkedIn</td><td style="padding:8px 0;">${data.linkedinUrl || '-'}</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">Portfolio</td><td style="padding:8px 0;">${data.portfolioUrl || '-'}</td></tr>
+<tr><td style="padding:8px 0;font-weight:600;color:#0A0A0A;">Resume URL</td><td style="padding:8px 0;">${data.resumeUrl}</td></tr>
+</table>
+<hr style="border:none;border-top:1px solid #E5E7EB;margin:20px 0;">
+<p style="font-size:14px;color:#374151;line-height:1.7;white-space:pre-wrap;">${data.coverLetter}</p>
+</td>
+</tr>
+<tr>
+<td style="background-color:#0A0A0A;padding:20px 40px;border-radius:0 0 12px 12px;">
+<p style="margin:0;font-size:12px;color:#888888;">&copy; 2026 Qaulium AI. All rights reserved.</p>
+</td>
+</tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
 // --- Helper: sanitize user input for email ---
 function escapeHtml(str) {
     if (!str) return '';
@@ -634,13 +779,147 @@ app.post('/api/contact', async (req, res) => {
     }
 });
 
+// POST /api/careers/apply
+app.post('/api/careers/apply', async (req, res) => {
+    try {
+        const {
+            firstName,
+            lastName,
+            email,
+            phone,
+            roleApplied,
+            experienceYears,
+            location,
+            currentCompany,
+            linkedinUrl,
+            portfolioUrl,
+            resumeUrl,
+            coverLetter
+        } = req.body;
+
+        if (!firstName || !lastName || !email || !phone || !roleApplied || !experienceYears || !location || !resumeUrl || !coverLetter) {
+            return res.status(400).json({ success: false, message: 'Please provide all required application details.' });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ success: false, message: 'Invalid email address.' });
+        }
+
+        const safeExperienceYears = parseInt(experienceYears, 10);
+        if (Number.isNaN(safeExperienceYears) || safeExperienceYears < 0 || safeExperienceYears > 50) {
+            return res.status(400).json({ success: false, message: 'Experience must be a valid number of years.' });
+        }
+
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            await pgQuery(
+                `
+                INSERT INTO career_applications (
+                    first_name, last_name, email, phone, role_applied, experience_years, location,
+                    current_company, linkedin_url, portfolio_url, resume_url, cover_letter
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                `,
+                [
+                    firstName.trim(),
+                    lastName.trim(),
+                    email.trim().toLowerCase(),
+                    phone.trim(),
+                    roleApplied.trim(),
+                    safeExperienceYears,
+                    location.trim(),
+                    (currentCompany || '').trim(),
+                    (linkedinUrl || '').trim(),
+                    (portfolioUrl || '').trim(),
+                    resumeUrl.trim(),
+                    coverLetter.trim()
+                ]
+            );
+        } else if (db) {
+            const stmt = db.prepare(`
+                INSERT INTO career_applications (
+                    first_name, last_name, email, phone, role_applied, experience_years, location,
+                    current_company, linkedin_url, portfolio_url, resume_url, cover_letter
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+
+            stmt.run(
+                firstName.trim(),
+                lastName.trim(),
+                email.trim().toLowerCase(),
+                phone.trim(),
+                roleApplied.trim(),
+                safeExperienceYears,
+                location.trim(),
+                (currentCompany || '').trim(),
+                (linkedinUrl || '').trim(),
+                (portfolioUrl || '').trim(),
+                resumeUrl.trim(),
+                coverLetter.trim()
+            );
+        }
+
+        if (transporter) {
+            const safeData = {
+                firstName: escapeHtml(firstName.trim()),
+                lastName: escapeHtml(lastName.trim()),
+                email: escapeHtml(email.trim().toLowerCase()),
+                phone: escapeHtml(phone.trim()),
+                roleApplied: escapeHtml(roleApplied.trim()),
+                experienceYears: safeExperienceYears,
+                location: escapeHtml(location.trim()),
+                currentCompany: escapeHtml((currentCompany || '').trim()),
+                linkedinUrl: escapeHtml((linkedinUrl || '').trim()),
+                portfolioUrl: escapeHtml((portfolioUrl || '').trim()),
+                resumeUrl: escapeHtml(resumeUrl.trim()),
+                coverLetter: escapeHtml(coverLetter.trim())
+            };
+
+            try {
+                await Promise.all([
+                    transporter.sendMail({
+                        from: SMTP_FROM,
+                        to: process.env.CONTACT_EMAIL || 'admin@qauliumai.in',
+                        subject: `Career Application: ${safeData.firstName} ${safeData.lastName} — ${safeData.roleApplied}`,
+                        html: buildCareerApplicationNotificationEmail(safeData)
+                    }),
+                    transporter.sendMail({
+                        from: SMTP_FROM,
+                        to: email.trim().toLowerCase(),
+                        subject: `Application Received — ${safeData.roleApplied} | Qaulium AI`,
+                        html: buildCareerApplicationConfirmationEmail(safeData.firstName, safeData.roleApplied),
+                        attachments: [{
+                            filename: 'logo-white.png',
+                            path: LOGO_PATH,
+                            cid: 'qualium-logo'
+                        }]
+                    })
+                ]);
+            } catch (emailErr) {
+                console.error('Failed to send career application emails:', emailErr.message);
+                return res.status(502).json({
+                    success: false,
+                    message: 'Application saved, but confirmation email could not be sent right now. Please try again.'
+                });
+            }
+        }
+
+        return res.json({ success: true, message: 'Application submitted successfully.' });
+    } catch (err) {
+        console.error('Career application error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
 // GET /api/stats — Admin endpoint for total request counts and recent submissions
 app.get('/api/stats', async (req, res) => {
     if (!HAS_POSTGRES && !db) {
         return res.json({
             success: true,
-            totals: { registrations: 0, contacts: 0, allRequests: 0 },
-            recent: { registrations: [], contacts: [] },
+            totals: { registrations: 0, contacts: 0, careers: 0, allRequests: 0 },
+            recent: { registrations: [], contacts: [], careers: [] },
             note: 'No persistent DB configured.'
         });
     }
@@ -648,16 +927,20 @@ app.get('/api/stats', async (req, res) => {
     try {
         let registrationsCount = 0;
         let contactsCount = 0;
+        let careersCount = 0;
         let recentRegistrations = [];
         let recentContacts = [];
+        let recentCareers = [];
 
         if (HAS_POSTGRES) {
             await ensurePostgresSchema();
 
             const regCountResult = await pgQuery('SELECT COUNT(*)::int AS count FROM registrations');
             const contactCountResult = await pgQuery('SELECT COUNT(*)::int AS count FROM contact_messages');
+            const careersCountResult = await pgQuery('SELECT COUNT(*)::int AS count FROM career_applications');
             registrationsCount = regCountResult.rows[0]?.count || 0;
             contactsCount = contactCountResult.rows[0]?.count || 0;
+            careersCount = careersCountResult.rows[0]?.count || 0;
 
             const regResult = await pgQuery(`
                 SELECT id, first_name, last_name, email, phone, company, role, use_case, registered_at
@@ -671,11 +954,19 @@ app.get('/api/stats', async (req, res) => {
                 ORDER BY sent_at DESC
                 LIMIT 10
             `);
+            const careersResult = await pgQuery(`
+                SELECT id, first_name, last_name, email, phone, role_applied, experience_years, location, current_company, linkedin_url, portfolio_url, resume_url, applied_at
+                FROM career_applications
+                ORDER BY applied_at DESC
+                LIMIT 10
+            `);
             recentRegistrations = regResult.rows;
             recentContacts = contactResult.rows;
+            recentCareers = careersResult.rows;
         } else {
             registrationsCount = db.prepare('SELECT COUNT(*) AS count FROM registrations').get().count;
             contactsCount = db.prepare('SELECT COUNT(*) AS count FROM contact_messages').get().count;
+            careersCount = db.prepare('SELECT COUNT(*) AS count FROM career_applications').get().count;
 
             recentRegistrations = db.prepare(
                 'SELECT id, first_name, last_name, email, phone, company, role, use_case, registered_at FROM registrations ORDER BY registered_at DESC LIMIT 10'
@@ -684,6 +975,10 @@ app.get('/api/stats', async (req, res) => {
             recentContacts = db.prepare(
                 'SELECT id, name, email, company, message, sent_at FROM contact_messages ORDER BY sent_at DESC LIMIT 10'
             ).all();
+
+            recentCareers = db.prepare(
+                'SELECT id, first_name, last_name, email, phone, role_applied, experience_years, location, current_company, linkedin_url, portfolio_url, resume_url, applied_at FROM career_applications ORDER BY applied_at DESC LIMIT 10'
+            ).all();
         }
 
         return res.json({
@@ -691,11 +986,13 @@ app.get('/api/stats', async (req, res) => {
             totals: {
                 registrations: registrationsCount,
                 contacts: contactsCount,
-                allRequests: registrationsCount + contactsCount
+                careers: careersCount,
+                allRequests: registrationsCount + contactsCount + careersCount
             },
             recent: {
                 registrations: recentRegistrations,
-                contacts: recentContacts
+                contacts: recentContacts,
+                careers: recentCareers
             }
         });
     } catch (err) {
@@ -742,6 +1039,25 @@ app.get('/api/contacts', async (req, res) => {
     }
 });
 
+// GET /api/careers — Admin endpoint to view all career applications
+app.get('/api/careers', async (req, res) => {
+    if (!HAS_POSTGRES && !db) return res.json({ success: true, count: 0, data: [], note: 'No persistent DB configured.' });
+    try {
+        let rows;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('SELECT * FROM career_applications ORDER BY applied_at DESC');
+            rows = result.rows;
+        } else {
+            rows = db.prepare('SELECT * FROM career_applications ORDER BY applied_at DESC').all();
+        }
+        res.json({ success: true, count: rows.length, data: rows });
+    } catch (err) {
+        console.error('Error fetching career applications:', err.message);
+        res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
 // --- Start Server (skip on Vercel) ---
 if (!process.env.VERCEL) {
     app.listen(PORT, () => {
@@ -751,8 +1067,11 @@ if (!process.env.VERCEL) {
         console.log(`    GET  /hardware           → Hardware page`);
         console.log(`    POST /api/register       → User registration`);
         console.log(`    POST /api/contact        → Contact form`);
+        console.log(`    POST /api/careers/apply  → Career application`);
+        console.log(`    GET  /api/stats          → Admin stats`);
         console.log(`    GET  /api/registrations  → View all registrations`);
         console.log(`    GET  /api/contacts       → View all contact messages\n`);
+        console.log(`    GET  /api/careers        → View all career applications\n`);
     });
 }
 
