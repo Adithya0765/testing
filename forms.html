@@ -21,18 +21,16 @@
   --ok: #16a34a;
   --font: 'IBM Plex Sans','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
-@media(prefers-color-scheme:dark){
-  :root {
-    --bg: #0a0a0a;
-    --surface: #141414;
-    --text: #f5f5f5;
-    --muted: #9ca3af;
-    --accent: #60a5fa;
-    --accent-hover: #3b82f6;
-    --border: #262626;
-    --err: #f87171;
-    --ok: #4ade80;
-  }
+[data-theme="dark"] {
+  --bg: #0A0A0A;
+  --surface: #141414;
+  --text: #f5f5f5;
+  --muted: #9ca3af;
+  --accent: #60a5fa;
+  --accent-hover: #3b82f6;
+  --border: #262626;
+  --err: #f87171;
+  --ok: #4ade80;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-font-smoothing:antialiased}
@@ -44,7 +42,14 @@ body{font-family:var(--font);color:var(--text);background:var(--bg);line-height:
 .form-header p{color:var(--muted);font-size:15px}
 .form-brand{display:flex;align-items:center;gap:8px;margin-bottom:18px;font-size:12px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase}
 .form-brand img{height:22px;filter:brightness(0)}
-@media(prefers-color-scheme:dark){.form-brand img{filter:brightness(1)}}
+[data-theme="dark"] .form-brand img{filter:brightness(1)}
+
+.form-theme-toggle{position:fixed;top:16px;right:16px;z-index:50;width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,border-color .2s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.form-theme-toggle:hover{border-color:var(--accent)}
+.form-theme-toggle .icon-sun{display:block}
+.form-theme-toggle .icon-moon{display:none}
+[data-theme="dark"] .form-theme-toggle .icon-sun{display:none}
+[data-theme="dark"] .form-theme-toggle .icon-moon{display:block}
 
 .form-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:16px}
 .form-section h2{font-family:'Inter',sans-serif;font-size:18px;font-weight:600;margin-bottom:4px}
@@ -104,12 +109,31 @@ body{font-family:var(--font);color:var(--text);background:var(--bg);line-height:
 </style>
 </head>
 <body>
+<button class="form-theme-toggle" id="formThemeToggle" aria-label="Toggle theme">
+  <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+  <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+</button>
 <div class="form-shell" id="formShell">
   <div class="form-loading" id="formLoading">Loading form...</div>
 </div>
 <script>
 (function(){
   'use strict';
+
+  // Theme - sync with landing page
+  var savedTheme = localStorage.getItem('qualium-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  document.getElementById('formThemeToggle').addEventListener('click', function() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('qualium-theme', next);
+  });
 
   const shell = document.getElementById('formShell');
   const slug = window.location.pathname.split('/forms/')[1] || '';

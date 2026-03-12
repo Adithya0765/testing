@@ -1688,9 +1688,12 @@ app.get('/api/admin/forms/:id/responses/export', requireAdminAuth, async (req, r
 
         const sections = JSON.parse(form.schema_json || '[]');
         const fieldsList = [];
+        let fieldCounter = 0;
         for (const s of sections) {
             for (const f of (s.fields || [])) {
-                fieldsList.push({ id: f.id, label: f.label || f.id });
+                fieldCounter++;
+                var lbl = (f.label && f.label.trim() && !/^f_[a-z0-9]+$/i.test(f.label.trim())) ? f.label.trim() : ('Question ' + fieldCounter);
+                fieldsList.push({ id: f.id, label: lbl });
             }
         }
 
