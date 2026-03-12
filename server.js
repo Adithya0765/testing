@@ -850,7 +850,7 @@ app.post('/api/careers/apply', async (req, res) => {
                     current_company, university, degree, graduation_year, availability,
                     linkedin_url, portfolio_url, resume_url, cover_letter
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 `,
                 [
                     firstName.trim(),
@@ -878,7 +878,7 @@ app.post('/api/careers/apply', async (req, res) => {
                     current_company, university, degree, graduation_year, availability,
                     linkedin_url, portfolio_url, resume_url, cover_letter
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
             stmt.run(
