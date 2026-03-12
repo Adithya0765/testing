@@ -346,12 +346,23 @@
     URL.revokeObjectURL(url);
   }
 
+  function renderTemplateHtml(def, contentValue, subjectValue) {
+    const contentHtml = (contentValue || 'Your message here.').replace(/\n/g, '<br>');
+    const safeSubject = subjectValue || def.subject || 'Message from Qaulium AI';
+    return def.body
+      .replace('{{CONTENT}}', contentHtml)
+      // Keep preview/email HTML title aligned with subject field.
+      .replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeSubject}</title>`);
+  }
+
   function applyTemplate() {
     const templateValue = document.querySelector('input[name="template"]:checked')?.value || 'blank';
     const def = templates[templateValue] || templates.blank;
-    emailSubject.value = def.subject;
-    const content = (middleContent.value.trim() || 'Your message here').replace(/\n/g, '<br>');
-    emailBody.value = def.body.replace('{{CONTENT}}', content);
+    const existingSubject = (emailSubject.value || '').trim();
+    if (!existingSubject) {
+      emailSubject.value = def.subject;
+    }
+    emailBody.value = renderTemplateHtml(def, middleContent.value, emailSubject.value.trim());
     updatePreview();
   }
 
@@ -754,7 +765,7 @@
     middleContent.addEventListener('input', function () {
       const templateValue = document.querySelector('input[name="template"]:checked')?.value || 'blank';
       const def = templates[templateValue] || templates.blank;
-      emailBody.value = def.body.replace('{{CONTENT}}', (this.value || 'Your message here.').replace(/\n/g, '<br>'));
+      emailBody.value = renderTemplateHtml(def, this.value, emailSubject.value.trim());
       updatePreview();
       
       // Update body hint
@@ -771,10 +782,9 @@
       if (subjectHint) {
         subjectHint.textContent = this.value.length > 0 ? `${this.value.length} character${this.value.length !== 1 ? 's' : ''}` : '';
       }
-      // Rebuild email body from template so {{CONTENT}} stays but preview updates
       const templateValue = document.querySelector('input[name="template"]:checked')?.value || 'blank';
       const def = templates[templateValue] || templates.blank;
-      emailBody.value = def.body.replace('{{CONTENT}}', (middleContent.value || 'Your message here.').replace(/\n/g, '<br>'));
+      emailBody.value = renderTemplateHtml(def, middleContent.value, this.value.trim());
       updatePreview();
     });
   }
