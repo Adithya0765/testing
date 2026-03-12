@@ -48,6 +48,19 @@ app.get('/logo-white.png', (req, res) => {
     res.send(buffer);
 });
 
+// Serve favicon (prevent 404 errors)
+app.get('/favicon.ico', (req, res) => {
+    const FAVICON_BASE64 = 'AAABAAEAEBAQAAEABACsAwAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAQAAAEAAAAAAAAAAAAA';
+    try {
+        const buffer = Buffer.from(FAVICON_BASE64, 'base64');
+        res.setHeader('Content-Type', 'image/x-icon');
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        res.send(buffer);
+    } catch (err) {
+        res.status(204).send();
+    }
+});
+
 // Explicit careers route for environments where extension fallback is skipped
 app.get('/careers', (req, res) => {
     res.sendFile(path.join(__dirname, 'careers.html'));
