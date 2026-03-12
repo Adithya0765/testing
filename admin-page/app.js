@@ -572,6 +572,20 @@
 
     const savedTheme = localStorage.getItem('qaulium_admin_theme') || 'light';
     setTheme(savedTheme);
+    // Restore saved draft if exists
+    const savedDraft = localStorage.getItem('qaulium_admin_draft');
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        const tplRadio = document.querySelector(`input[name="template"][value="${draft.template}"]`);
+        if (tplRadio) tplRadio.checked = true;
+        const audRadio = document.querySelector(`input[name="audience"][value="${draft.audience}"]`);
+        if (audRadio) { audRadio.checked = true; customEmailsWrap.classList.toggle('hidden', draft.audience !== 'custom'); }
+        if (draft.subject) emailSubject.value = draft.subject;
+        if (draft.body) middleContent.value = draft.body;
+        if (draft.customEmails) customEmails.value = draft.customEmails;
+      } catch (e) { /* ignore corrupt draft */ }
+    }
     applyTemplate();
 
     if (!state.token) {
@@ -751,17 +765,19 @@
     });
   }
 
-  // Subject line hint
+  // Subject line hint — also rebuild body so preview iframe reflects subject
   if (emailSubject) {
     emailSubject.addEventListener('input', function () {
       if (subjectHint) {
         subjectHint.textContent = this.value.length > 0 ? `${this.value.length} character${this.value.length !== 1 ? 's' : ''}` : '';
       }
+      // Rebuild email body from template so {{CONTENT}} stays but preview updates
+      const templateValue = document.querySelector('input[name="template"]:checked')?.value || 'blank';
+      const def = templates[templateValue] || templates.blank;
+      emailBody.value = def.body.replace('{{CONTENT}}', (middleContent.value || 'Your message here.').replace(/\n/g, '<br>'));
       updatePreview();
     });
   }
-
-  if (emailBody) emailBody.addEventListener('input', updatePreview);
   
   // Template radio button listeners
   document.querySelectorAll('input[name="template"]').forEach(function (radio) {
