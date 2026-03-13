@@ -430,6 +430,17 @@
       '</div>';
   }
 
+  function getRegistrationSourceLabel(source) {
+    var value = String(source || '').trim().toLowerCase();
+    if (value === 'public_registration_portal') {
+      return { text: 'Pre-Registration Link', className: 'source-badge source-pre' };
+    }
+    if (value === 'landing_modal') {
+      return { text: 'Landing Page', className: 'source-badge source-landing' };
+    }
+    return { text: 'Unknown', className: 'source-badge source-unknown' };
+  }
+
   function getFilteredRegistrations() {
     const q = (registrationsSearch && registrationsSearch.value || '').trim().toLowerCase();
     return state.tables.registrations.rows.filter(function (row) {
@@ -469,13 +480,14 @@
       renderNoRows(registrationsBody, 8);
     } else {
       registrationsBody.innerHTML = paged.rows.map(function (row) {
+        var sourceMeta = getRegistrationSourceLabel(row.source);
         return '<tr>' +
           '<td>' + escapeHtml((row.first_name || '') + ' ' + (row.last_name || '')) + '</td>' +
           '<td>' + escapeHtml(row.email || '-') + '</td>' +
           '<td>' + escapeHtml(row.phone || '-') + '</td>' +
           '<td>' + escapeHtml(row.company || '-') + '</td>' +
           '<td>' + escapeHtml(row.role || '-') + '</td>' +
-          '<td>' + escapeHtml(row.source || 'unknown') + '</td>' +
+          '<td><span class="' + sourceMeta.className + '">' + escapeHtml(sourceMeta.text) + '</span></td>' +
           '<td>' + escapeHtml(formatDate(row.registered_at)) + '</td>' +
           '<td>' + rowActions('registrations', row.id) + '</td>' +
         '</tr>';

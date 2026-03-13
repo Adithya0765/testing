@@ -218,6 +218,54 @@ textarea { resize: vertical; }
   border-color: color-mix(in oklab, var(--err) 45%, var(--border-strong));
 }
 
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+
+.source-landing {
+  color: #0f766e;
+  background: #ccfbf1;
+  border-color: #99f6e4;
+}
+
+.source-pre {
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-color: #bfdbfe;
+}
+
+.source-unknown {
+  color: #475467;
+  background: #f2f4f7;
+  border-color: #d0d5dd;
+}
+
+[data-theme="dark"] .source-landing {
+  color: #5eead4;
+  background: rgba(20, 184, 166, 0.2);
+  border-color: rgba(45, 212, 191, 0.35);
+}
+
+[data-theme="dark"] .source-pre {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+[data-theme="dark"] .source-unknown {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
 .row-icon-btn.danger:hover {
   background: color-mix(in oklab, var(--err) 10%, var(--surface));
   border-color: var(--err);
