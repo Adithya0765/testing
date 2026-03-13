@@ -172,7 +172,7 @@ function requireAdminAuth(req, res, next) {
     const auth = req.headers.authorization || '';
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
     const payload = verifyAdminToken(token);
-    if (!payload) {
+    if (!payload || payload.otpVerified !== true) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
     req.admin = payload;
@@ -1430,6 +1430,7 @@ app.post('/api/admin/login', (req, res) => {
     const token = signAdminToken({
         email: ADMIN_LOGIN_EMAIL,
         role: 'admin',
+        otpVerified: true,
         exp: Date.now() + (12 * 60 * 60 * 1000)
     });
 
