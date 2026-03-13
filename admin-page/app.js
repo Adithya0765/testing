@@ -434,7 +434,7 @@
     const q = (registrationsSearch && registrationsSearch.value || '').trim().toLowerCase();
     return state.tables.registrations.rows.filter(function (row) {
       if (!q) return true;
-      const hay = [row.first_name, row.last_name, row.email, row.phone, row.company, row.role, row.use_case].join(' ').toLowerCase();
+      const hay = [row.first_name, row.last_name, row.email, row.phone, row.company, row.role, row.use_case, row.source].join(' ').toLowerCase();
       return hay.includes(q);
     });
   }
@@ -466,7 +466,7 @@
     state.tables.registrations.page = paged.page;
 
     if (!paged.rows.length) {
-      renderNoRows(registrationsBody, 7);
+      renderNoRows(registrationsBody, 8);
     } else {
       registrationsBody.innerHTML = paged.rows.map(function (row) {
         return '<tr>' +
@@ -475,6 +475,7 @@
           '<td>' + escapeHtml(row.phone || '-') + '</td>' +
           '<td>' + escapeHtml(row.company || '-') + '</td>' +
           '<td>' + escapeHtml(row.role || '-') + '</td>' +
+          '<td>' + escapeHtml(row.source || 'unknown') + '</td>' +
           '<td>' + escapeHtml(formatDate(row.registered_at)) + '</td>' +
           '<td>' + rowActions('registrations', row.id) + '</td>' +
         '</tr>';
@@ -901,8 +902,8 @@
   registrationsExportBtn.addEventListener('click', function () {
     const rows = getFilteredRegistrations();
     downloadCsv('registrations.csv',
-      ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Role', 'Use Case', 'Registered At'],
-      rows.map(function (r) { return [r.first_name, r.last_name, r.email, r.phone, r.company, r.role, r.use_case, r.registered_at]; })
+      ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Role', 'Use Case', 'Source', 'Registered At'],
+      rows.map(function (r) { return [r.first_name, r.last_name, r.email, r.phone, r.company, r.role, r.use_case, r.source || 'unknown', r.registered_at]; })
     );
   });
 

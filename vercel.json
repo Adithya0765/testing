@@ -5,6 +5,9 @@
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/forms/:slug", "destination": "/api" },
     { "source": "/careers", "destination": "/careers.html" },
-    { "source": "/careers/apply", "destination": "/careers-apply.html" }
+    { "source": "/careers/apply", "destination": "/careers-apply.html" },
+    { "source": "/registration", "destination": "/registration.html" },
+    { "source": "/pre-register", "destination": "/registration.html" },
+    { "source": "/pre-registration", "destination": "/registration.html" }
   ]
 }

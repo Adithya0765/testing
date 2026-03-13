@@ -21,10 +21,12 @@
         setTheme('light');
     }
 
-    themeToggle.addEventListener('click', function () {
-        var current = document.documentElement.getAttribute('data-theme');
-        setTheme(current === 'dark' ? 'light' : 'dark');
-    });
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function () {
+            var current = document.documentElement.getAttribute('data-theme');
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        });
+    }
 
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
         if (!localStorage.getItem('qualium-theme')) {
@@ -38,6 +40,7 @@
 
     function updateHeader() {
         var scrollY = window.scrollY;
+        if (!header) return;
         if (scrollY > 10) {
             header.classList.add('scrolled');
         } else {
@@ -53,19 +56,21 @@
     var navToggle = document.getElementById('navToggle');
     var mobileNav = document.getElementById('mobileNav');
 
-    navToggle.addEventListener('click', function () {
-        navToggle.classList.toggle('active');
-        mobileNav.classList.toggle('open');
-        document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
-    });
-
-    mobileNav.querySelectorAll('a').forEach(function (link) {
-        link.addEventListener('click', function () {
-            navToggle.classList.remove('active');
-            mobileNav.classList.remove('open');
-            document.body.style.overflow = '';
+    if (navToggle && mobileNav) {
+        navToggle.addEventListener('click', function () {
+            navToggle.classList.toggle('active');
+            mobileNav.classList.toggle('open');
+            document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
         });
-    });
+
+        mobileNav.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                navToggle.classList.remove('active');
+                mobileNav.classList.remove('open');
+                document.body.style.overflow = '';
+            });
+        });
+    }
 
     // --- Quantum Circuit: random build animation ---
     (function () {
@@ -326,7 +331,7 @@
             var target = document.querySelector(targetId);
             if (target) {
                 e.preventDefault();
-                var headerHeight = header.offsetHeight;
+                var headerHeight = header ? header.offsetHeight : 72;
                 var targetPosition = target.getBoundingClientRect().top + window.scrollY - headerHeight - 20;
                 window.scrollTo({
                     top: targetPosition,
@@ -364,13 +369,16 @@
     var modalClose = document.getElementById('modalClose');
     var registerForm = document.getElementById('registerForm');
     var formStatus = document.getElementById('formStatus');
+    var portalRegisterBtn = document.getElementById('portalRegisterBtn');
 
     function openModal() {
+        if (!registerModal) return;
         registerModal.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {
+        if (!registerModal) return;
         registerModal.classList.remove('open');
         document.body.style.overflow = '';
     }
@@ -423,6 +431,16 @@
         });
     }
 
+    if (portalRegisterBtn && registerModal) {
+        portalRegisterBtn.addEventListener('click', function () {
+            openModal();
+        });
+    }
+
+    if (registerModal && document.body.getAttribute('data-auto-open-registration') === 'true') {
+        openModal();
+    }
+
     // --- Registration form submission ---
     if (registerForm) {
         registerForm.addEventListener('submit', function (e) {
@@ -435,9 +453,16 @@
             var company = document.getElementById('regCompany').value.trim();
             var role = document.getElementById('regRole').value.trim();
             var useCase = document.getElementById('regUseCase').value;
+            var registrationSource = (registerForm.getAttribute('data-registration-source') || '').trim();
+
+            if (!registrationSource) {
+                registrationSource = window.location.pathname.indexOf('registration') !== -1
+                    ? 'public_registration_portal'
+                    : 'landing_modal';
+            }
 
             // Basic validation
-            if (!firstName || !lastName || !email || !phone || !company || !role || !useCase) {
+            if (!firstName || !lastName || !email || !company || !role || !useCase) {
                 showStatus('Please fill in all required fields.', 'error');
                 return;
             }
@@ -459,7 +484,8 @@
                 phone: phone,
                 company: company,
                 role: role,
-                useCase: useCase
+                useCase: useCase,
+                source: registrationSource
             };
 
             fetch('/api/register', {
@@ -472,10 +498,22 @@
                 if (data.success) {
                     showStatus('Registration successful! A confirmation email has been sent to ' + email + '.', 'success');
                     registerForm.reset();
+
+                    var redirectTo = registerForm.getAttribute('data-redirect-on-success');
+                    var redirectDelay = parseInt(registerForm.getAttribute('data-redirect-delay-ms') || '2200', 10);
+
+                    if (redirectTo) {
+                        setTimeout(function () {
+                            window.location.href = redirectTo;
+                        }, isNaN(redirectDelay) ? 2200 : redirectDelay);
+                    }
+
                     setTimeout(function () {
                         closeModal();
-                        formStatus.style.display = 'none';
-                        formStatus.className = 'form-status';
+                        if (formStatus) {
+                            formStatus.style.display = 'none';
+                            formStatus.className = 'form-status';
+                        }
                     }, 4000);
                 } else {
                     showStatus(data.message || 'Registration failed. Please try again.', 'error');

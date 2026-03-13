@@ -78,6 +78,22 @@ app.get('/careers-apply.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'careers-apply.html'));
 });
 
+app.get('/registration', (req, res) => {
+    res.sendFile(path.join(__dirname, 'registration.html'));
+});
+
+app.get('/registration.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'registration.html'));
+});
+
+app.get('/pre-register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'registration.html'));
+});
+
+app.get('/pre-registration', (req, res) => {
+    res.sendFile(path.join(__dirname, 'registration.html'));
+});
+
 // CORS for separate admin subdomain app
 app.use((req, res, next) => {
     if (!req.path.startsWith('/api/admin')) return next();
@@ -190,15 +206,25 @@ async function ensurePostgresSchema() {
                     id SERIAL PRIMARY KEY,
                     first_name TEXT NOT NULL,
                     last_name TEXT NOT NULL,
-                    email TEXT NOT NULL UNIQUE,
+                    email TEXT NOT NULL,
                     phone TEXT DEFAULT '',
                     company TEXT DEFAULT '',
                     role TEXT DEFAULT '',
                     use_case TEXT DEFAULT '',
+                    source TEXT DEFAULT 'unknown',
                     registered_at TIMESTAMPTZ DEFAULT NOW(),
                     email_confirmed INTEGER DEFAULT 0
                 )
             `);
+
+            await pgQuery(`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'unknown'`);
+            await pgQuery(`UPDATE registrations SET source = 'unknown' WHERE source IS NULL OR source = ''`);
+
+            // Backward-compatible migration: older deployments enforced unique email
+            // which prevented multiple submissions from the same user.
+            await pgQuery(`DROP INDEX IF EXISTS idx_registrations_email`);
+            await pgQuery(`DROP INDEX IF EXISTS registrations_email_key`);
+            await pgQuery(`ALTER TABLE registrations DROP CONSTRAINT IF EXISTS registrations_email_key`);
 
             await pgQuery(`
                 CREATE TABLE IF NOT EXISTS contact_messages (
@@ -280,11 +306,12 @@ if (HAS_POSTGRES) {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 first_name TEXT NOT NULL,
                 last_name TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
+                email TEXT NOT NULL,
                 phone TEXT DEFAULT '',
                 company TEXT DEFAULT '',
                 role TEXT DEFAULT '',
                 use_case TEXT DEFAULT '',
+                source TEXT DEFAULT 'unknown',
                 registered_at TEXT DEFAULT (datetime('now')),
                 email_confirmed INTEGER DEFAULT 0
             );
@@ -348,6 +375,50 @@ if (HAS_POSTGRES) {
                 submitted_at TEXT DEFAULT (datetime('now'))
             );
         `);
+
+        // Backward-compatible migration for SQLite databases created with
+        // registrations.email UNIQUE.
+        try {
+            const registrationTableInfo = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='registrations'").get();
+            const registrationSql = ((registrationTableInfo && registrationTableInfo.sql) || '').toUpperCase();
+            if (registrationSql.includes('EMAIL TEXT NOT NULL UNIQUE')) {
+                db.exec(`
+                    BEGIN TRANSACTION;
+
+                    ALTER TABLE registrations RENAME TO registrations_old;
+
+                    CREATE TABLE registrations (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        first_name TEXT NOT NULL,
+                        last_name TEXT NOT NULL,
+                        email TEXT NOT NULL,
+                        phone TEXT DEFAULT '',
+                        company TEXT DEFAULT '',
+                        role TEXT DEFAULT '',
+                        use_case TEXT DEFAULT '',
+                        source TEXT DEFAULT 'unknown',
+                        registered_at TEXT DEFAULT (datetime('now')),
+                        email_confirmed INTEGER DEFAULT 0
+                    );
+
+                    INSERT INTO registrations (
+                        id, first_name, last_name, email, phone, company, role, use_case, source, registered_at, email_confirmed
+                    )
+                    SELECT
+                        id, first_name, last_name, email, phone, company, role, use_case, 'unknown', registered_at, email_confirmed
+                    FROM registrations_old;
+
+                    DROP TABLE registrations_old;
+
+                    COMMIT;
+                `);
+            }
+        } catch (migrationErr) {
+            console.warn('SQLite registrations migration skipped:', migrationErr.message);
+        }
+
+        try { db.prepare('ALTER TABLE registrations ADD COLUMN source TEXT DEFAULT "unknown"').run(); } catch (e) {}
+        try { db.prepare("UPDATE registrations SET source = 'unknown' WHERE source IS NULL OR source = ''").run(); } catch (e) {}
     } catch (e) {
         console.warn('SQLite unavailable:', e.message);
         db = null;
@@ -786,12 +857,26 @@ function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function normalizeRegistrationSource(source) {
+    const value = String(source || '').trim().toLowerCase();
+    if (!value) return 'unknown';
+
+    const allowed = new Set([
+        'landing_modal',
+        'public_registration_portal',
+        'unknown'
+    ]);
+
+    return allowed.has(value) ? value : 'unknown';
+}
+
 // --- API Routes ---
 
 // POST /api/register
 app.post('/api/register', async (req, res) => {
     try {
-        const { firstName, lastName, email, phone, company, role, useCase } = req.body;
+        const { firstName, lastName, email, phone, company, role, useCase, source } = req.body;
+        const normalizedSource = normalizeRegistrationSource(source);
 
         if (!firstName || !firstName.trim() || !lastName || !lastName.trim() || !email || !email.trim()) {
             return res.status(400).json({ success: false, message: 'First name, last name, and email are required.' });
@@ -805,50 +890,38 @@ app.post('/api/register', async (req, res) => {
         // Insert into database (Postgres on Vercel, SQLite locally)
         if (HAS_POSTGRES) {
             await ensurePostgresSchema();
-            try {
-                await pgQuery(
-                    `
-                    INSERT INTO registrations (first_name, last_name, email, phone, company, role, use_case)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    `,
-                    [
-                        firstName.trim(),
-                        lastName.trim(),
-                        email.trim().toLowerCase(),
-                        (phone || '').trim(),
-                        (company || '').trim(),
-                        (role || '').trim(),
-                        (useCase || '').trim()
-                    ]
-                );
-            } catch (dbErr) {
-                if (dbErr.code === '23505') {
-                    return res.status(409).json({ success: false, message: 'This email is already registered. Please use a different email.' });
-                }
-                throw dbErr;
-            }
-        } else if (db) {
-            const stmt = db.prepare(`
-                INSERT INTO registrations (first_name, last_name, email, phone, company, role, use_case)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            `);
-
-            try {
-                stmt.run(
+            await pgQuery(
+                `
+                INSERT INTO registrations (first_name, last_name, email, phone, company, role, use_case, source)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                `,
+                [
                     firstName.trim(),
                     lastName.trim(),
                     email.trim().toLowerCase(),
                     (phone || '').trim(),
                     (company || '').trim(),
                     (role || '').trim(),
-                    (useCase || '').trim()
-                );
-            } catch (dbErr) {
-                if (dbErr.message && dbErr.message.includes('UNIQUE constraint failed')) {
-                    return res.status(409).json({ success: false, message: 'This email is already registered. Please use a different email.' });
-                }
-                throw dbErr;
-            }
+                    (useCase || '').trim(),
+                    normalizedSource
+                ]
+            );
+        } else if (db) {
+            const stmt = db.prepare(`
+                INSERT INTO registrations (first_name, last_name, email, phone, company, role, use_case, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+
+            stmt.run(
+                firstName.trim(),
+                lastName.trim(),
+                email.trim().toLowerCase(),
+                (phone || '').trim(),
+                (company || '').trim(),
+                (role || '').trim(),
+                (useCase || '').trim(),
+                normalizedSource
+            );
         }
 
         // Send confirmation email immediately before returning success

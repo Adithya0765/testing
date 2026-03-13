@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-Registration Portal - Qaulium AI</title>
+    <meta name="description" content="Public pre-registration portal for Qaulium AI early access. Complete your registration and get confirmation by email.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="256x256" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body data-auto-open-registration="true">
+
+    <header class="site-header" id="siteHeader">
+        <nav class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <img class="logo-mark" src="logo-white.png" alt="Qaulium AI" height="36">
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html#architecture">Platform</a></li>
+                <li><a href="hardware.html">Hardware</a></li>
+                <li><a href="index.html#developer">Developer</a></li>
+                <li><a href="index.html#research">Research</a></li>
+                <li><a href="registration.html" class="active">Pre-Register</a></li>
+                <li><a href="index.html#contact" class="nav-cta">Contact Us</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <svg class="theme-icon theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg class="theme-icon theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu">
+                <span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <div class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav-links">
+            <li><a href="index.html#architecture">Platform</a></li>
+            <li><a href="hardware.html">Hardware</a></li>
+            <li><a href="index.html#developer">Developer</a></li>
+            <li><a href="index.html#research">Research</a></li>
+            <li><a href="registration.html">Pre-Register</a></li>
+            <li><a href="index.html#contact">Contact Us</a></li>
+        </ul>
+    </div>
+
+    <main>
+        <section class="hero registration-hero" id="registrationHero">
+            <div class="container">
+                <div class="registration-portal-wrap reveal visible">
+                    <p class="hero-eyebrow">Public Registration Portal</p>
+                    <h1 class="hero-headline">Pre-Register For Early Access</h1>
+                    <p class="hero-sub">Use this dedicated portal to complete your pre-registration. You will receive an automatic confirmation email after successful submission.</p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" id="portalRegisterBtn">Open Pre-Registration Form <span class="btn-icon">&rarr;</span></button>
+                        <a href="index.html" class="btn btn-secondary">Back To Main Landing</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Qaulium AI, Inc. All rights reserved.</p>
+                <div class="footer-legal">
+                    <a href="index.html">Main Landing</a>
+                    <a href="index.html#contact">Support</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Registration Modal -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal-container">
+            <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+            <div class="modal-header">
+                <h2>Create Your Account</h2>
+                <p>Register for early access to Qaulium-Studio and our quantum development platform.</p>
+            </div>
+            <form class="register-form" id="registerForm" data-registration-source="public_registration_portal" data-redirect-on-success="/" data-redirect-delay-ms="2200" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="regFirstName">First Name</label>
+                        <input type="text" id="regFirstName" name="firstName" required autocomplete="given-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="regLastName">Last Name</label>
+                        <input type="text" id="regLastName" name="lastName" required autocomplete="family-name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Work Email</label>
+                    <input type="email" id="regEmail" name="email" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="regPhone">Phone Number</label>
+                    <input type="tel" id="regPhone" name="phone" required autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label for="regCompany">Organization</label>
+                    <input type="text" id="regCompany" name="company" required autocomplete="organization">
+                </div>
+                <div class="form-group">
+                    <label for="regRole">Role / Title</label>
+                    <input type="text" id="regRole" name="role" required autocomplete="organization-title">
+                </div>
+                <div class="form-group">
+                    <label for="regUseCase">Primary Use Case</label>
+                    <select id="regUseCase" name="useCase" required>
+                        <option value="">Select a use case</option>
+                        <option value="research">Academic Research</option>
+                        <option value="enterprise">Enterprise Deployment</option>
+                        <option value="drug-discovery">Drug Discovery</option>
+                        <option value="finance">Financial Modeling</option>
+                        <option value="climate">Climate Simulation</option>
+                        <option value="cryptography">Cryptography</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-status" id="formStatus"></div>
+                <button type="submit" class="btn btn-primary btn-full" id="registerBtn">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
