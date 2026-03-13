@@ -249,6 +249,17 @@ textarea { resize: vertical; }
   height: 100vh;
 }
 
+.sidebar-brand {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.sidebar-brand h2 {
+  font-size: 28px;
+  line-height: 1.05;
+}
+
 .menu {
   display: grid;
   gap: 8px;
@@ -886,6 +897,7 @@ tbody tr:nth-child(even) {
   font-size: 13px;
   margin-bottom: 12px;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -1216,29 +1228,92 @@ tbody tr:nth-child(even) {
   }
 
   .sidebar {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 40;
     height: auto;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    padding: 14px;
-    gap: 12px;
+    padding: 12px 14px 10px;
+    gap: 10px;
+    background: color-mix(in oklab, var(--surface) 94%, transparent);
+    backdrop-filter: blur(14px);
   }
 
-  .content {
-    padding: 20px;
+  .sidebar-brand {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .sidebar-brand h2 {
+    font-size: 20px;
+  }
+
+  .menu {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .menu-item {
+    white-space: nowrap;
+    min-width: max-content;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 13px;
+  }
+
+  .menu-item.active {
+    background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
   }
 
   .sidebar-actions {
-    margin-top: 4px;
+    margin-top: 0;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .sidebar-actions .btn {
-    padding: 10px 12px;
+    border-radius: 12px;
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .content {
+    padding: 18px 16px 28px;
+  }
+
+  .topbar {
+    margin-bottom: 16px;
+  }
+
+  .topbar h1 {
+    font-size: clamp(28px, 6vw, 34px);
+    margin-bottom: 6px;
   }
 
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .stat-card p {
+    font-size: 24px;
   }
 
   .template-grid {
@@ -1252,6 +1327,16 @@ tbody tr:nth-child(even) {
   .panel-toolbar,
   #panel-careers .panel-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .pagination-bar {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .table-wrap {
+    border-radius: 12px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .composer-layout {
@@ -1275,25 +1360,49 @@ tbody tr:nth-child(even) {
   #emailPreviewFrame {
     min-height: 420px;
   }
+
+  .forms-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
   .sidebar {
-    padding: 12px;
-  }
-
-  .menu {
-    grid-template-columns: 1fr;
+    padding: 10px 12px 8px;
     gap: 8px;
   }
 
+  .sidebar-brand h2 {
+    font-size: 18px;
+  }
+
+  .menu {
+    gap: 8px;
+    margin: 0 -2px;
+    padding: 0 2px 2px;
+  }
+
   .menu-item {
-    padding: 10px;
-    font-size: 15px;
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .sidebar-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sidebar-actions .btn {
+    font-size: 11px;
+    padding: 9px 6px;
+  }
+
+  .content {
+    padding: 14px 12px 24px;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .topbar h1 {
@@ -1306,6 +1415,19 @@ tbody tr:nth-child(even) {
 
   .template-grid {
     grid-template-columns: 1fr;
+  }
+
+  .composer-editor,
+  .composer-preview,
+  .fb-header-card,
+  .fb-section-card,
+  .fb-sidebar-card,
+  .form-card,
+  .overview-note,
+  .table-wrap,
+  .composer-card,
+  .stat-card {
+    border-radius: 12px;
   }
 
   .composer-editor {
@@ -1340,11 +1462,12 @@ tbody tr:nth-child(even) {
     align-items: stretch;
   }
 
-  .sidebar-actions {
-    grid-template-columns: 1fr;
+  .panel-toolbar .btn,
+  .composer-actions .btn {
+    width: 100%;
   }
 
-  .table-wrap {
-    -webkit-overflow-scrolling: touch;
+  .form-card {
+    padding: 16px;
   }
 }
