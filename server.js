@@ -1355,7 +1355,7 @@ async function getAudienceEmails(audience, customEmails) {
 }
 
 // --- Admin Auth + Admin APIs (for separate admin subdomain) ---
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', async (req, res) => {
     const { email, password, requestId, otp } = req.body || {};
 
     if (!ADMIN_TOKEN_SECRET) {
