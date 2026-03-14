@@ -462,10 +462,6 @@
         });
     }
 
-    if (registerModal && document.body.getAttribute('data-auto-open-registration') === 'true') {
-        openModal();
-    }
-
     // --- Registration form submission ---
     if (registerForm) {
         registerForm.addEventListener('submit', function (e) {
@@ -532,12 +528,17 @@
                     showStatus('Registration successful! A confirmation email has been sent to ' + email + '.', 'success');
                     registerForm.reset();
 
-                    var redirectTo = registerForm.getAttribute('data-redirect-on-success');
+                    var redirectTo = (registerForm.getAttribute('data-redirect-on-success') || '').trim();
                     var redirectDelay = parseInt(registerForm.getAttribute('data-redirect-delay-ms') || '2200', 10);
+
+                    // Always redirect to landing page after success when submitting from registration portal.
+                    if (!redirectTo && window.location.pathname.indexOf('registration') !== -1) {
+                        redirectTo = '/';
+                    }
 
                     if (redirectTo) {
                         setTimeout(function () {
-                            window.location.href = redirectTo;
+                            window.location.replace(redirectTo);
                         }, isNaN(redirectDelay) ? 2200 : redirectDelay);
                     }
 

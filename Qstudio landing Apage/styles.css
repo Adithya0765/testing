@@ -106,14 +106,12 @@ ul {
     box-shadow: 0 0 0 7px color-mix(in srgb, var(--color-accent) 18%, transparent);
 }
 
-.header-logo {
-    display: block;
-    height: 34px;
-    width: auto;
+.logo-mark {
+    flex-shrink: 0;
     filter: invert(1);
 }
 
-[data-theme="dark"] .header-logo {
+[data-theme="dark"] .logo-mark {
     filter: invert(0);
 }
 
