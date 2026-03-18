@@ -1,0 +1,5 @@
+﻿/* Hardware Engineer dashboard specific styles */
+.role-accent { color: #6366F1 !important; }
+@media (max-width: 768px) {
+    #mainContent > div > div { grid-template-columns: 1fr !important; }
+}

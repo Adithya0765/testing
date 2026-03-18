@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Test Users - Qualium AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0A0A0B; color: #F3F4F6; min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        p.sub { color: #9CA3AF; font-size: 14px; margin-bottom: 32px; }
+        .warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: #F59E0B; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; background: #2563EB; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { background: #1D4ED8; }
+        #log { margin-top: 24px; background: #111113; border: 1px solid #1F2937; border-radius: 12px; padding: 20px; font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.8; max-height: 500px; overflow-y: auto; }
+        .log-success { color: #10B981; }
+        .log-error { color: #EF4444; }
+        .log-info { color: #3B82F6; }
+        .log-warn { color: #F59E0B; }
+        .creds-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+        .creds-table th, .creds-table td { text-align: left; padding: 10px 16px; border-bottom: 1px solid #1F2937; font-size: 13px; }
+        .creds-table th { color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px; }
+        .creds-table td { font-family: 'Consolas', monospace; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Setup Test Users</h1>
+        <p class="sub">Creates test accounts for all 9 roles in Firebase Auth + Firestore</p>
+
+        <div class="warning">
+            ⚠️ <strong>One-time setup:</strong> Run this once to create test users. Make sure you have <strong>Firestore</strong> (not just Realtime Database) enabled in Firebase Console → Firestore Database → Create database → Start in test mode.
+        </div>
+
+        <button class="btn" id="createBtn" onclick="createAllUsers()">
+            🚀 Create All Test Users
+        </button>
+
+        <div id="log"></div>
+        <div id="credsTable"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        const TEST_USERS = [
+            { email: 'admin@qualiumai.in',     password: 'Admin@2026',     firstName: 'Admin',    lastName: 'User',      role: 'admin',     department: 'Management' },
+            { email: 'frontend@qualiumai.in',   password: 'Frontend@2026',  firstName: 'Arun',     lastName: 'Kumar',     role: 'frontend',  department: 'Engineering' },
+            { email: 'backend@qualiumai.in',    password: 'Backend@2026',   firstName: 'Priya',    lastName: 'Sharma',    role: 'backend',   department: 'Engineering' },
+            { email: 'uiux@qualiumai.in',       password: 'UiUx@2026',      firstName: 'Rahul',    lastName: 'Verma',     role: 'uiux',      department: 'Design' },
+            { email: 'research@qualiumai.in',   password: 'Research@2026',  firstName: 'Sneha',    lastName: 'Patel',     role: 'research',  department: 'R&D' },
+            { email: 'marketing@qualiumai.in',  password: 'Marketing@2026', firstName: 'Vikram',   lastName: 'Singh',     role: 'marketing', department: 'Marketing' },
+            { email: 'pr@qualiumai.in',          password: 'PR@2026test',    firstName: 'Ananya',   lastName: 'Reddy',     role: 'pr',        department: 'Communications' },
+            { email: 'design@qualiumai.in',     password: 'Design@2026',    firstName: 'Karthik',  lastName: 'Nair',      role: 'design',    department: 'Design' },
+            { email: 'hardware@qualiumai.in',   password: 'Hardware@2026',  firstName: 'Deepak',   lastName: 'Gupta',     role: 'hardware',  department: 'Hardware' }
+        ];
+
+        const ROLE_COLORS = {
+            admin: '#EF4444', frontend: '#3B82F6', backend: '#10B981',
+            uiux: '#8B5CF6', research: '#F59E0B', marketing: '#EC4899',
+            pr: '#06B6D4', design: '#F97316', hardware: '#6366F1'
+        };
+
+        const logEl = document.getElementById('log');
+
+        function log(msg, type = 'info') {
+            const cls = { success: 'log-success', error: 'log-error', info: 'log-info', warn: 'log-warn' };
+            const prefix = { success: '✓', error: '✗', info: '→', warn: '⚠' };
+            logEl.innerHTML += `<div class="${cls[type] || ''}">${prefix[type] || '→'} ${msg}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        async function createAllUsers() {
+            const btn = document.getElementById('createBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating users...';
+            logEl.innerHTML = '';
+
+            const created = [];
+
+            for (const user of TEST_USERS) {
+                try {
+                    log(`Setting up ${user.role}: ${user.email}...`);
+
+                    let uid;
+                    try {
+                        // Try creating new auth user
+                        const cred = await auth.createUserWithEmailAndPassword(user.email, user.password);
+                        uid = cred.user.uid;
+                        log(`Auth user created: ${uid}`, 'success');
+                    } catch (authErr) {
+                        if (authErr.code === 'auth/email-already-in-use') {
+                            // User already exists — sign in to get UID
+                            log(`Auth user exists, signing in...`, 'warn');
+                            const cred = await auth.signInWithEmailAndPassword(user.email, user.password);
+                            uid = cred.user.uid;
+                            log(`Signed in as: ${uid}`, 'success');
+                        } else {
+                            throw authErr;
+                        }
+                    }
+
+                    // Create/update Firestore profile
+                    await db.collection('users').doc(uid).set({
+                        email: user.email,
+                        name: `${user.firstName} ${user.lastName}`,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        phone: '',
+                        role: user.role,
+                        department: user.department,
+                        totpEnabled: false,
+                        totpSecret: '',
+                        status: 'active',
+                        dashboardSections: ['tasks', 'notifications'],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    log(`Firestore profile created for ${user.firstName} ${user.lastName}`, 'success');
+
+                    // Seed mock tasks and notifications (unless admin)
+                    if (user.role !== 'admin') {
+                        // Create 2 tasks
+                        const tasks = [
+                            {
+                                title: `Setup ${user.department} environment`,
+                                description: `Please configure your local environment for ${user.role} role.`,
+                                assignedTo: uid,
+                                status: 'in-progress',
+                                progress: 40,
+                                priority: 'high',
+                                department: user.department,
+                                notes: ['Started working on it today.'],
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            },
+                            {
+                                title: `Complete onboarding training`,
+                                description: `Watch the introduction videos and read guidelines.`,
+                                assignedTo: uid,
+                                status: 'assigned',
+                                progress: 0,
+                                priority: 'medium',
+                                department: user.department,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            }
+                        ];
+                        for (let t of tasks) await db.collection('tasks').add(t);
+
+                        // Create 1 notification
+                        await db.collection('notifications').add({
+                            userId: uid,
+                            title: 'Welcome to Qualium AI',
+                            message: `Your ${user.role} account has been successfully set up.`,
+                            type: 'system',
+                            read: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        log(`Mock tasks and notifications added for ${uid}`);
+                    }
+
+                    // Sign out so we can create next user
+                    await auth.signOut();
+
+                    created.push({ ...user, uid, status: 'Created' });
+                } catch (err) {
+                    log(`Failed: ${err.message}`, 'error');
+                    created.push({ ...user, uid: '—', status: 'Failed: ' + err.message });
+                    try { await auth.signOut(); } catch(e) {}
+                }
+            }
+
+            log('');
+            log('All done! You can now log in with any of these accounts.', 'success');
+            log('Delete this file (setup-test-users.html) when finished.', 'warn');
+
+            // Show credentials table
+            showCredsTable(created);
+
+            btn.textContent = '✓ Complete';
+        }
+
+        function showCredsTable(users) {
+            const table = document.getElementById('credsTable');
+            table.innerHTML = `
+                <table class="creds-table">
+                    <thead>
+                        <tr><th>Role</th><th>Email</th><th>Password</th><th>Name</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(u => `
+                            <tr>
+                                <td><span class="badge" style="background:${ROLE_COLORS[u.role]};color:#fff">${u.role.toUpperCase()}</span></td>
+                                <td>${u.email}</td>
+                                <td>${u.password}</td>
+                                <td>${u.firstName} ${u.lastName}</td>
+                                <td style="color:${u.status === 'Created' ? '#10B981' : u.status.includes('exists') ? '#F59E0B' : '#EF4444'}">${u.status}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+    </script>
+</body>
+</html>

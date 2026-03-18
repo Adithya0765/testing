@@ -1,0 +1,5 @@
+﻿/* Research Analyst dashboard specific styles */
+.role-accent { color: #F59E0B !important; }
+@media (max-width: 768px) {
+    #mainContent > div > div { grid-template-columns: 1fr !important; }
+}

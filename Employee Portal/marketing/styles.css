@@ -1,0 +1,5 @@
+﻿/* Marketing Specialist dashboard specific styles */
+.role-accent { color: #EC4899 !important; }
+@media (max-width: 768px) {
+    #mainContent > div > div { grid-template-columns: 1fr !important; }
+}

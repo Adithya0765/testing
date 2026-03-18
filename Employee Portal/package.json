@@ -1,0 +1,16 @@
+{
+  "name": "employee-portal",
+  "version": "1.0.0",
+  "description": "Production-ready employee management portal with Firebase backend, server-side TOTP 2FA, role-based dashboards, and Vercel deployment.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "resend": "^6.9.4"
+  }
+}

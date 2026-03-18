@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Qualium AI Portal</title>
+    <meta name="description" content="Qualium AI Admin Management Panel">
+    <link rel="icon" type="image/png" href="../assets/logo-white.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner spinner-lg"></div>
+        <div class="loading-text">Loading admin panel...</div>
+    </div>
+
+    <div class="portal-layout" style="display:none" id="portalLayout">
+        <aside class="portal-sidebar" id="sidebar"></aside>
+        <div class="portal-main">
+            <header class="portal-topbar" id="topbar"></header>
+            <main class="portal-content" id="mainContent"></main>
+        </div>
+    </div>
+
+    <!-- Invite Modal -->
+    <div class="modal-overlay" id="inviteModal">
+        <div class="modal-container">
+            <button class="modal-close" onclick="closeModal('inviteModal')">&times;</button>
+            <h2 class="modal-title">Invite Employee</h2>
+            <p class="modal-subtitle">Send an invitation to a new team member</p>
+            <form id="inviteForm" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">First Name <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="invFirstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="invLastName" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email <span class="required">*</span></label>
+                    <input type="email" class="form-input" id="invEmail" required placeholder="employee@qualiumai.in">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Role <span class="required">*</span></label>
+                        <select class="form-select" id="invRole">
+                            <option value="frontend">Frontend</option>
+                            <option value="backend">Backend</option>
+                            <option value="uiux">UI/UX</option>
+                            <option value="research">Research</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="pr">PR</option>
+                            <option value="design">Design</option>
+                            <option value="hardware">Hardware</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-input" id="invDepartment" placeholder="Engineering">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-input" id="invPhone" placeholder="+91 98765 43210">
+                </div>
+                <div id="inviteError" class="form-error-text" style="display:none"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('inviteModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="sendInviteBtn">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal-container">
+            <button class="modal-close" onclick="closeModal('taskModal')">&times;</button>
+            <h2 class="modal-title" id="taskModalTitle">Create Task</h2>
+            <p class="modal-subtitle">Assign a task to a team member</p>
+            <form id="taskForm" novalidate>
+                <input type="hidden" id="taskEditId">
+                <div class="form-group">
+                    <label class="form-label">Task Title <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="taskTitle" required placeholder="Design landing page mockups">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" id="taskDesc" placeholder="Describe the task requirements..." rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Assign To</label>
+                        <select class="form-select" id="taskAssignee"><option value="">Unassigned</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select class="form-select" id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-input" id="taskDept" placeholder="Engineering">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Deadline</label>
+                        <input type="date" class="form-input" id="taskDeadline">
+                    </div>
+                </div>
+                <div id="taskError" class="form-error-text" style="display:none"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('taskModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveTaskBtn">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../app.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
