@@ -10,6 +10,10 @@ const path = require('path');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
+const http = require('http');
+
+let WebSocketServer = null;
+try { ({ WebSocketServer } = require('ws')); } catch (e) { WebSocketServer = null; }
 
 let Database;
 try { Database = require('better-sqlite3'); } catch (e) { Database = null; }
@@ -20,26 +24,248 @@ try { ({ Client: PgClient } = require('pg')); } catch (e) { PgClient = null; }
 const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_VERCEL = !!process.env.VERCEL;
+const IS_PRODUCTION_RUNTIME = IS_VERCEL || process.env.NODE_ENV === 'production';
 const POSTGRES_CONNECTION_STRING = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.PRISMA_DATABASE_URL;
 const HAS_POSTGRES = !!(PgClient && POSTGRES_CONNECTION_STRING);
 const ADMIN_APP_ORIGIN = process.env.ADMIN_APP_ORIGIN || 'https://admin.qauliumai.in';
 const ADMIN_LOGIN_EMAIL = process.env.ADMIN_LOGIN_EMAIL || 'admin@qauliumai.in';
 const ADMIN_LOGIN_PASSWORD = process.env.ADMIN_LOGIN_PASSWORD || '';
+const ADMIN_LOGIN_ROLE = process.env.ADMIN_LOGIN_ROLE || 'admin';
+const ADMIN_DEV_OTP_BYPASS = !IS_PRODUCTION_RUNTIME && process.env.ADMIN_DEV_OTP_BYPASS === '1';
+const ADMIN_DEV_AUTH_BYPASS = !IS_PRODUCTION_RUNTIME && process.env.ADMIN_DEV_AUTH_BYPASS === '1';
 const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || '';
 const ADMIN_OTP_TTL_MS = parseInt(process.env.ADMIN_OTP_TTL_MS || '300000', 10); // 5 min
 const ADMIN_OTP_EMAIL = (process.env.ADMIN_OTP_EMAIL || ADMIN_LOGIN_EMAIL).trim().toLowerCase();
+const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'qaulium-default-org';
 
 const pendingAdminOtps = new Map();
+const adminWsClients = new Set();
+const ADMIN_RUNTIME_SAMPLE_LIMIT = 200;
+const ADMIN_DASHBOARD_CACHE_TTL_MS = 5000;
+const adminRuntimeMetrics = {
+    startedAt: Date.now(),
+    requestCount: 0,
+    errorCount: 0,
+    samples: [],
+    lastUpdatedAt: null
+};
+let adminDashboardCache = {
+    expiresAt: 0,
+    payload: null
+};
+const ADMIN_ROLE_PERMISSIONS = {
+    super_admin: ['*'],
+    admin: [
+        'users.manage',
+        'roles.manage',
+        'api_keys.manage',
+        'security.manage',
+        'notifications.manage',
+        'organization.manage',
+        'projects.manage',
+        'tasks.manage',
+        'settings.manage',
+        'audit.view'
+    ],
+    org_admin: [
+        'users.manage',
+        'notifications.manage',
+        'organization.manage',
+        'projects.manage',
+        'tasks.manage',
+        'audit.view'
+    ],
+    analyst: ['analytics.view', 'audit.view'],
+    support_agent: ['users.manage', 'notifications.manage'],
+    auditor: ['audit.view']
+};
+
+function normalizeAdminRole(role) {
+    return String(role || 'admin').trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+function getAdminPermissions(role) {
+    const key = normalizeAdminRole(role);
+    return ADMIN_ROLE_PERMISSIONS[key] || ADMIN_ROLE_PERMISSIONS.admin;
+}
+
+function hasAdminPermission(admin, permission) {
+    const perms = getAdminPermissions(admin && admin.role);
+    return perms.includes('*') || perms.includes(permission);
+}
+
+function buildAdminEvent(eventType, payload) {
+    return JSON.stringify({
+        eventId: crypto.randomUUID(),
+        eventType: String(eventType || 'admin.event'),
+        timestamp: new Date().toISOString(),
+        payload: payload || {}
+    });
+}
+
+function buildUsageEventId(scope) {
+    return `${String(scope || 'event')}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+}
+
+function estimateCreditCost(options) {
+    const cfg = options || {};
+    const units = Math.max(1, Number(cfg.units || 1));
+    const baseCredits = Math.max(0, Number(cfg.baseCredits || 0));
+    const unitRate = Math.max(0, Number(cfg.unitRate || 0));
+    const regionMultiplier = Math.max(0, Number(cfg.regionMultiplier || 1));
+    const priorityMultiplier = Math.max(0, Number(cfg.priorityMultiplier || 1));
+    const planDiscount = Math.max(0, Number(cfg.planDiscount || 1));
+    const estimatedCredits = Number(((baseCredits + (units * unitRate)) * regionMultiplier * priorityMultiplier * planDiscount).toFixed(4));
+
+    return {
+        estimatedCredits,
+        breakdown: {
+            units,
+            baseCredits,
+            unitRate,
+            regionMultiplier,
+            priorityMultiplier,
+            planDiscount
+        }
+    };
+}
+
+async function applyDirectCreditCharge(_payload) {
+    return { success: true };
+}
+
+async function recordUsageLog(_payload) {
+    return { success: true };
+}
+
+function broadcastAdminEvent(eventType, payload) {
+    if (!adminWsClients.size) return;
+    const message = buildAdminEvent(eventType, payload);
+    for (const client of adminWsClients) {
+        if (!client || client.readyState !== 1) continue;
+        try {
+            client.send(message);
+        } catch (e) {
+            // no-op
+        }
+    }
+}
+
+function attachAdminWebSocketServer(server) {
+    if (!WebSocketServer || !server) return;
+
+    const wsServer = new WebSocketServer({ server, path: '/ws/admin' });
+    wsServer.on('connection', function (socket, req) {
+        try {
+            const url = new URL(req.url, 'http://localhost');
+            const token = url.searchParams.get('token') || '';
+            const payload = verifyAdminToken(token);
+            if (!payload || payload.otpVerified !== true) {
+                socket.close(1008, 'Unauthorized');
+                return;
+            }
+        } catch (e) {
+            socket.close(1008, 'Unauthorized');
+            return;
+        }
+
+        adminWsClients.add(socket);
+        socket.send(buildAdminEvent('ws.connected', { ok: true }));
+
+        socket.on('close', function () {
+            adminWsClients.delete(socket);
+        });
+    });
+}
+
+function invalidateAdminDashboardCache() {
+    adminDashboardCache.expiresAt = 0;
+    adminDashboardCache.payload = null;
+}
+
+function recordApiRuntimeMetric(reqPath, statusCode, durationMs) {
+    if (!String(reqPath || '').startsWith('/api/')) return;
+    adminRuntimeMetrics.requestCount += 1;
+    if (Number(statusCode) >= 400) {
+        adminRuntimeMetrics.errorCount += 1;
+    }
+    adminRuntimeMetrics.samples.push(Math.max(0, Number(durationMs) || 0));
+    if (adminRuntimeMetrics.samples.length > ADMIN_RUNTIME_SAMPLE_LIMIT) {
+        adminRuntimeMetrics.samples.shift();
+    }
+    adminRuntimeMetrics.lastUpdatedAt = new Date().toISOString();
+}
+
+function getPercentile(values, percentile) {
+    if (!Array.isArray(values) || !values.length) return 0;
+    const sorted = values.slice().sort(function (a, b) { return a - b; });
+    const position = Math.min(sorted.length - 1, Math.max(0, Math.ceil((percentile / 100) * sorted.length) - 1));
+    return sorted[position] || 0;
+}
+
+function getRuntimeMonitoringSnapshot() {
+    return {
+        apiP95LatencyMs: Math.round(getPercentile(adminRuntimeMetrics.samples, 95)),
+        apiErrorRatePercent: adminRuntimeMetrics.requestCount
+            ? Number(((adminRuntimeMetrics.errorCount / adminRuntimeMetrics.requestCount) * 100).toFixed(2))
+            : 0,
+        uptimeSeconds: Math.max(0, Math.round(process.uptime())),
+        requestCount: adminRuntimeMetrics.requestCount,
+        sampleCount: adminRuntimeMetrics.samples.length,
+        lastUpdatedAt: adminRuntimeMetrics.lastUpdatedAt,
+        startedAt: new Date(adminRuntimeMetrics.startedAt).toISOString()
+    };
+}
 
 // Trust the first proxy (Vercel, etc.) so express-rate-limit reads X-Forwarded-For correctly
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
 // --- Middleware ---
+app.use((req, res, next) => {
+    const isSecure = req.secure || String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https';
+
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+    if (isSecure) {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+
+    if (req.path.startsWith('/api/')) {
+        res.setHeader('Cache-Control', 'no-store');
+    }
+
+    return next();
+});
+
 app.use(express.json({ limit: '1mb' }));
+app.use((req, res, next) => {
+    const startedAt = Date.now();
+    res.on('finish', () => {
+        recordApiRuntimeMetric(req.path, res.statusCode, Date.now() - startedAt);
+    });
+    next();
+});
 app.use(express.static(path.join(__dirname), {
     index: 'index.html',
     extensions: ['html']
 }));
+
+app.get('/api/health', (req, res) => {
+    return res.json({
+        success: true,
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        runtime: {
+            vercel: IS_VERCEL,
+            production: IS_PRODUCTION_RUNTIME,
+            hasPostgres: HAS_POSTGRES
+        }
+    });
+});
 
 // Serve logo from base64 data (fixes Vercel deployment where file serving may fail)
 const LOGO_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAwcAAAEJCAYAAADBzVsWAAAQAElEQVR4AeydB5xkVZX/qyf2RDAQFUXMIkZUzJgVBXPGLIZ1Wde0q6uuq6uu66pr4G/EhBlzBBNrQsSACQMiIAgoohJmpif2zP/7PVOvqO6u8F51VXdV9+nPO3XTueee+7vp3PtCL6nlXyKQCCQCiUAikAgkAolAIpAIgkJsDQMgrEVi4SGQNUoFEoFEIBFIBBKBRCARSAQSgUQgEVgIqEhtEoFEIBFIBBKBRCARSAQSgUQgEUgEEoFEIBFIBBKBRSARSAQSgUQgEUgEEoFEIBFYqAjk5mChNmzWMhFIBBKBRCARSAQSgUQgEUgEEoFEIBFIBBKBRCARSAQSgUXQ2llnRSARSAQSgRFFoGqTCCQCiUAikAgkAolAIpAIJAKJQCKQCCQCiUAikAgkAotAIjcHi6DNU/tEIBFIBBKBRCARSAQSgZGF4P+ZVSIILAo5OajlaSKQCCQCiUAikAgkAolAIpAIJAKJQCKQCCQCiUAikAgkAotAIjcHi6DNU/tEIBFIBBKBRCARSAQSgRGFYP+5VyIILAo5OajlaSKQCCQCiUAikAgkAolAIpAIJAKJQCKQCCQCiUAikAgkAotAIjcHi6DNU/tEIBFIBBKBRCARSAQSgRGF4P+5VyIILAo5OajlaSKQCCQCiUAikAgkAolAIpAIJAKJQCKQCCQCiUAikAgkAotAIjcHi6DNU/tEIBFIBBKBRCARSAQSgRGF4P+5VyIILAo5OajlaSKQCCQCiUAikAgkAolAIpAIJAKJQCKQCCQCiUAikAgkAotAIjcHi6DNU/tEIBFIBBKBRCARSAQSgRGF4P+5VyIILAo5OajlaSKQCCQCiUAikAgkAolAIpAIJAKJQCKQCCQCiUAikAgkAotAIjcHi6DNU/tEIBFIBBKBRCARSAQSgRGF4P+5VyIILAo5OajlaSKQCCQCiUAikAgkAolAIpAIJAKJQCKQCCQCiUAikAgkAotAIgRzczCsQxW3wHGvM9Fvy3WvM9F/RqXmRCAR+L+Lbn7laCiBQg1fkCo0wheFXH+DcFZwuhMIl3FYOuKVLWJEw+aKmRboEV3Sdf6bpzC61lYXSKr3tObjq9t8VN+VWJfkJsqGEQeHl69xhvvWCquRHwKvVxUcIWI8L6xW4PbvXphJvdwkwRPJWKhN1RYqm3VhOZF2rOxPXWHnY7TxVP/7WMvqfZRhpS+tIZH+VlKfWl8Wb3JKPEeNbLJ6yrpZQdmUHtpqcGHKT1Y5gHJ34ppZ6hW0pxjmTb4vHE5hHJHJS8CWH6zS3fKKRAGVvV2HnP5lm26bxIcvJvQWPbgm8Kgp+h5+Jz+/o9qZmlMKYOJk7sD+qMaUhctMVHYGO0UO8u0SJfkQs9OaLJq+Tqf+VK4I5kzgdY8Wq++fYfm5Th05Oo6qFLn+T42vJ5vkpWqMqKj4S/eOEMvCqx/EJqUDwX6fCqMvkZhWz/TKVshqKY6AzJLj2yHwGmQXHQiePXSKJ+3rMPGhLMu8LZ2FNlKjVGcxdGcVltQ3VhqHcXFxMEfBltHl/qURQU7v3a9e7EkqKGLNfkM+u6r3dGG7Ml6v1X5Jvxt4vgp+g8V0Pv1MIeVXOVhiJqNeLuIh06AMXR8AZDjzh8WzJxqvrtYFJN2p8yBYq50kYhNQ2ZJMVTYyJtQtyTDRpvHlhjBU1wc1KR8Lp5ySs+n6ZSrOGJ3KD0u1oPpXDC6qqVVbhZ10jyBqQvZv4aKsQsDLKkPLqHU7KQj9w4lAolAIhBXdQxfQJOV8vhdiFXF8Cq3SPWnDxYaMulZL6V/m3TKt14H8GD/pPKbVPgJKAeVy7cDvwqFZlxFJ6M6YDG6Wug9T5mK8cYyRcqc2lq/H/1RLqMpS2jm2agsCMJa50X6s8qZkgT6hQJzlqKJbkAcMLgU9q/LpoMvH3bTgJnRh5c9bGlVl9PnJWsVXXOhVPqx0Hzwqm8oKrCuGVm+8oT3ebq20VXKDfNLLlW9nTR63H5BNZQ1TJaOVbZKxfWxqoQx8sQiCEDLnAg8+OU7S4ViMGFNfkCVaAf4plRZ3zt2pnzp9Jqqd0r3V3xf2L8BZQqJx0c5C8vdnW3r9Z2aNtLeVsEgtGNxPPBWPNZxcXFxMDLxKMVvdIvZv5uCc0bQmvXBqvFnC4f3LwV5OFQMfPiXy/0rPzEGSH/KFPaKC5KYLcY5k6TnAO7nVkzVIU0ByPRjKxMFGqb/a5Oep8cFdqyWP1Nb0+qZJ4+YYxvUOqXhCx9tPWZ7U8ib3cOHB1pY5tZHBCM2k7BVLBYOKNWNXCOkkrXRsI9Sx100qVx8FVqybQ5a4fNWZ5qWM1dGcWPKoT0yrNI84WPj8d7F7K3S/zFQvbvZ3NnD7hXxQJJ2oxXf8j30MkplLVMjCKDJQ8rNyZjzQakEG+vOGsGPJ+RVMuE8a84Oa5bhFvFLEsSK5xLJbzGNn3Nex9xLPGv7Z2BSIT7RyoT8K6lDC7D7H3ExdQa/xJakY2hEjbNaE6a2YiDa7lRQ9WQGUCrQl7KDzYVQRDnjxXXZ8VY4a4bhbqQ3oAqEGLYEy888d3aYVJLQjvl6yUkscP4bH/MfNWPqBqwN8hG3EScEBdFAqMN/dMNfB4BPrUXXbnPD7/kzGmKnXOX6I0qTHrxRE3Hkzf5NG8sHlq1BQFoxgcaGBaJkELvY+nYXvPKjLzZlmBBqDpMDCXO/MKnEEqLLq7oBSGj1nj/bLVFnyJ1UVUVn5q4e/kOI1d0vmv1fOE37LKHKf9X0J9hMXDqeVKkVfr5r1nDQUUpj/CPcnUXc5dVqCHlDPqVaF6mWJ6fj3+g3q/ZbDNkuhZWJMtVGNgJfqqAiJOfQaQ7wlKvEQ7J5u09zFuPqKVlzWFLu0sFPJ6UGxGJ5nqJVl5bcnPPVU1MQIqSXqbj4eHy1fpMhGEGl7QumCQwRWVJ5L0l4MxI4d9sDHMt3aPQMbVfpbx26YhwQVIlV+gWj5gqmLHFUx5h7GYIwTBLr5eKj7sMiAXVJDDmcK5nGpMj/7AY/WpKOBdNu/cMrb3r4dQUCqV7B3FjqNLgkXKvHp8pnzHWB8NQKW0KMXqcEz5mLGMd1p1h+2RDGxV7YcNbFfZLZQeLYe3efdfGLLfQi9HkHEhNvLU4zB9PVKk1K+S0dCU3c6drmLeTPVjAE0sRgjdmKhxcDSrmNjXPJc4Dj4BhxvK8H+lqLbkE3w7xJ6nKe77Vhs=';
@@ -109,7 +335,9 @@ app.use((req, res, next) => {
         'http://localhost:3001',
         'http://127.0.0.1:3001',
         'http://localhost:5500',
-        'http://127.0.0.1:5500'
+        'http://127.0.0.1:5500',
+        'http://localhost:5501',
+        'http://127.0.0.1:5501'
     ];
 
     if (origin && allowedOrigins.includes(origin)) {
@@ -178,6 +406,28 @@ function requireAdminAuth(req, res, next) {
     }
     req.admin = payload;
     return next();
+}
+
+function requireAdminPermission(permission) {
+    return function (req, res, next) {
+        if (!hasAdminPermission(req.admin, permission)) {
+            return res.status(403).json({ success: false, message: 'Forbidden: missing permission ' + permission });
+        }
+        return next();
+    };
+}
+
+function requireAdminAnyPermission(permissions) {
+    const list = Array.isArray(permissions) ? permissions : [];
+    return function (req, res, next) {
+        const allowed = list.some(function (permission) {
+            return hasAdminPermission(req.admin, permission);
+        });
+        if (!allowed) {
+            return res.status(403).json({ success: false, message: 'Forbidden: insufficient role permissions.' });
+        }
+        return next();
+    };
 }
 
 // --- Database Setup ---
@@ -316,6 +566,111 @@ async function ensurePostgresSchema() {
                     submitted_at TIMESTAMPTZ DEFAULT NOW()
                 )
             `);
+
+            await pgSchemaQuery(`
+                CREATE TABLE IF NOT EXISTS admin_departments (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    lead TEXT DEFAULT '',
+                    parent TEXT DEFAULT '-',
+                    region TEXT DEFAULT 'IN',
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+
+            await pgSchemaQuery(`
+                CREATE TABLE IF NOT EXISTS admin_employees (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    email TEXT NOT NULL,
+                    department TEXT DEFAULT 'Unassigned',
+                    manager TEXT DEFAULT '-',
+                    country TEXT DEFAULT 'IN',
+                    phone TEXT DEFAULT '',
+                    role TEXT DEFAULT '',
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+
+            await pgSchemaQuery(`
+                CREATE TABLE IF NOT EXISTS admin_projects (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    owner TEXT DEFAULT '-',
+                    status TEXT DEFAULT 'On Track',
+                    deadline TIMESTAMPTZ,
+                    progress INTEGER DEFAULT 0,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+
+            await pgSchemaQuery(`
+                CREATE TABLE IF NOT EXISTS admin_tasks (
+                    id SERIAL PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    project TEXT DEFAULT 'General',
+                    assignee TEXT DEFAULT 'Unassigned',
+                    priority TEXT DEFAULT 'Medium',
+                    status TEXT DEFAULT 'todo',
+                    due_date TIMESTAMPTZ,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+
+            await pgSchemaQuery(`
+                CREATE TABLE IF NOT EXISTS admin_notifications (
+                    id SERIAL PRIMARY KEY,
+                    time TIMESTAMPTZ DEFAULT NOW(),
+                    title TEXT NOT NULL,
+                    channel TEXT DEFAULT 'email',
+                    status TEXT DEFAULT 'queued',
+                    audience TEXT DEFAULT 'all',
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+
+            await pgSchemaQuery(`
+                CREATE TABLE IF NOT EXISTS admin_incidents (
+                    id SERIAL PRIMARY KEY,
+                    time TIMESTAMPTZ DEFAULT NOW(),
+                    summary TEXT NOT NULL,
+                    severity TEXT DEFAULT 'low',
+                    status TEXT DEFAULT 'open',
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+
+            await pgSchemaQuery(`
+                CREATE TABLE IF NOT EXISTS admin_runtime_settings (
+                    id INTEGER PRIMARY KEY,
+                    locale TEXT DEFAULT 'en',
+                    country TEXT DEFAULT 'all',
+                    realtime_enabled INTEGER DEFAULT 1,
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+
+            await pgSchemaQuery(`
+                CREATE TABLE IF NOT EXISTS admin_enterprise_state (
+                    id INTEGER PRIMARY KEY,
+                    state_json TEXT NOT NULL DEFAULT '{}',
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+
+            await pgSchemaQuery(`
+                INSERT INTO admin_runtime_settings (id, locale, country, realtime_enabled)
+                VALUES (1, 'en', 'all', 1)
+                ON CONFLICT (id) DO NOTHING
+            `);
+
+            await pgSchemaQuery(`
+                INSERT INTO admin_enterprise_state (id, state_json)
+                VALUES (1, '{}')
+                ON CONFLICT (id) DO NOTHING
+            `);
         })();
     }
     await postgresSchemaReady;
@@ -400,7 +755,87 @@ if (HAS_POSTGRES) {
                 respondent_email TEXT DEFAULT '',
                 submitted_at TEXT DEFAULT (datetime('now'))
             );
+
+            CREATE TABLE IF NOT EXISTS admin_departments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                lead TEXT DEFAULT '',
+                parent TEXT DEFAULT '-',
+                region TEXT DEFAULT 'IN',
+                created_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS admin_employees (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                department TEXT DEFAULT 'Unassigned',
+                manager TEXT DEFAULT '-',
+                country TEXT DEFAULT 'IN',
+                phone TEXT DEFAULT '',
+                role TEXT DEFAULT '',
+                created_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS admin_projects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                owner TEXT DEFAULT '-',
+                status TEXT DEFAULT 'On Track',
+                deadline TEXT DEFAULT '',
+                progress INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS admin_tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                project TEXT DEFAULT 'General',
+                assignee TEXT DEFAULT 'Unassigned',
+                priority TEXT DEFAULT 'Medium',
+                status TEXT DEFAULT 'todo',
+                due_date TEXT DEFAULT '',
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS admin_notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                time TEXT DEFAULT (datetime('now')),
+                title TEXT NOT NULL,
+                channel TEXT DEFAULT 'email',
+                status TEXT DEFAULT 'queued',
+                audience TEXT DEFAULT 'all',
+                created_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS admin_incidents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                time TEXT DEFAULT (datetime('now')),
+                summary TEXT NOT NULL,
+                severity TEXT DEFAULT 'low',
+                status TEXT DEFAULT 'open',
+                created_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS admin_runtime_settings (
+                id INTEGER PRIMARY KEY,
+                locale TEXT DEFAULT 'en',
+                country TEXT DEFAULT 'all',
+                realtime_enabled INTEGER DEFAULT 1,
+                updated_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS admin_enterprise_state (
+                id INTEGER PRIMARY KEY,
+                state_json TEXT NOT NULL DEFAULT '{}',
+                updated_at TEXT DEFAULT (datetime('now'))
+            );
         `);
+
+        try { db.prepare("INSERT OR IGNORE INTO admin_runtime_settings (id, locale, country, realtime_enabled) VALUES (1, 'en', 'all', 1)").run(); } catch (e) {}
+        try { db.prepare("INSERT OR IGNORE INTO admin_enterprise_state (id, state_json) VALUES (1, '{}')").run(); } catch (e) {}
 
         // Backward-compatible migration for SQLite databases created with
         // registrations.email UNIQUE.
@@ -1029,6 +1464,7 @@ app.post('/api/register', async (req, res) => {
             }
         }
 
+        invalidateAdminDashboardCache();
         res.json({ success: true, message: 'Registration successful.' });
 
     } catch (err) {
@@ -1133,6 +1569,7 @@ app.post('/api/contact', async (req, res) => {
             }
         }
 
+        invalidateAdminDashboardCache();
         res.json({ success: true, message: 'Message sent successfully.' });
 
     } catch (err) {
@@ -1291,6 +1728,7 @@ app.post('/api/careers/apply', async (req, res) => {
             }
         }
 
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Application submitted successfully.' });
     } catch (err) {
         console.error('Career application error:', err.message);
@@ -1328,6 +1766,48 @@ async function fetchCareers() {
     return [];
 }
 
+async function fetchAdminFormsList() {
+    if (HAS_POSTGRES) {
+        await ensurePostgresSchema();
+        const result = await pgQuery(`
+            SELECT
+                f.id,
+                f.title,
+                f.description,
+                f.slug,
+                f.is_active,
+                f.created_at,
+                f.updated_at,
+                COALESCE(COUNT(fr.id), 0)::int AS response_count
+            FROM forms f
+            LEFT JOIN form_responses fr ON fr.form_id = f.id
+            GROUP BY f.id
+            ORDER BY f.created_at DESC
+        `);
+        return result.rows;
+    }
+
+    if (db) {
+        return db.prepare(`
+            SELECT
+                f.id,
+                f.title,
+                f.description,
+                f.slug,
+                f.is_active,
+                f.created_at,
+                f.updated_at,
+                COUNT(fr.id) AS response_count
+            FROM forms f
+            LEFT JOIN form_responses fr ON fr.form_id = f.id
+            GROUP BY f.id
+            ORDER BY f.created_at DESC
+        `).all();
+    }
+
+    return [];
+}
+
 function chunkArray(items, size) {
     const chunks = [];
     for (let i = 0; i < items.length; i += size) {
@@ -1359,12 +1839,30 @@ async function getAudienceEmails(audience, customEmails) {
 app.post('/api/admin/login', async (req, res) => {
     const { email, password, requestId, otp } = req.body || {};
 
+    if (ADMIN_DEV_AUTH_BYPASS) {
+        if (!ADMIN_TOKEN_SECRET) {
+            return res.status(500).json({ success: false, message: 'Admin auth is not configured.' });
+        }
+        const token = signAdminToken({
+            email: ADMIN_LOGIN_EMAIL,
+            role: ADMIN_LOGIN_ROLE,
+            otpVerified: true,
+            exp: Date.now() + (12 * 60 * 60 * 1000)
+        });
+        return res.json({
+            success: true,
+            token,
+            admin: { email: ADMIN_LOGIN_EMAIL, role: ADMIN_LOGIN_ROLE },
+            message: 'Dev auth bypass enabled.'
+        });
+    }
+
     if (!ADMIN_TOKEN_SECRET) {
-        return res.status(500).json({ success: false, message: 'Admin auth is not configured.' });
+        return res.status(503).json({ success: false, message: 'Admin auth is not configured.' });
     }
 
     if (!ADMIN_LOGIN_PASSWORD) {
-        return res.status(500).json({ success: false, message: 'Admin login password not configured.' });
+        return res.status(503).json({ success: false, message: 'Admin login password not configured.' });
     }
 
     const normalizedEmail = (email || '').trim().toLowerCase();
@@ -1386,9 +1884,24 @@ app.post('/api/admin/login', async (req, res) => {
             attempts: 0
         });
 
+        if (ADMIN_DEV_OTP_BYPASS) {
+            pendingAdminOtps.set(loginRequestId, {
+                email: normalizedEmail,
+                otpHash: crypto.createHash('sha256').update('000000').digest('hex'),
+                expiresAt: Date.now() + ADMIN_OTP_TTL_MS,
+                attempts: 0
+            });
+            return res.json({
+                success: true,
+                requiresOtp: true,
+                requestId: loginRequestId,
+                message: 'Dev OTP bypass enabled. Use OTP 000000.'
+            });
+        }
+
         if (!transporter) {
             pendingAdminOtps.delete(loginRequestId);
-            return res.status(500).json({ success: false, message: 'Email service not configured for OTP.' });
+            return res.status(503).json({ success: false, message: 'Email service not configured for OTP.' });
         }
 
         try {
@@ -1439,12 +1952,12 @@ app.post('/api/admin/login', async (req, res) => {
 
     const token = signAdminToken({
         email: ADMIN_LOGIN_EMAIL,
-        role: 'admin',
+        role: ADMIN_LOGIN_ROLE,
         otpVerified: true,
         exp: Date.now() + (12 * 60 * 60 * 1000)
     });
 
-    return res.json({ success: true, token, admin: { email: ADMIN_LOGIN_EMAIL, role: 'admin' } });
+    return res.json({ success: true, token, admin: { email: ADMIN_LOGIN_EMAIL, role: ADMIN_LOGIN_ROLE } });
 });
 
 app.get('/api/admin/me', requireAdminAuth, (req, res) => {
@@ -1516,6 +2029,516 @@ function parseAdminId(req, res) {
     return id;
 }
 
+function parseEnterpriseStateJson(value) {
+    try {
+        const parsed = JSON.parse(String(value || '{}'));
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+async function fetchAdminEnterpriseData() {
+    const defaults = {
+        users: [],
+        roles: [],
+        apiKeys: [],
+        security: {
+            mfaRequired: true,
+            ssoRequired: false,
+            sessionLock: true,
+            piiMasking: true,
+            ipAllowlist: false,
+            immutableAudit: true
+        },
+        billingPlans: [],
+        auditLogs: [],
+        analyticsHistory: [],
+        departments: [],
+        employees: [],
+        projects: [],
+        tasks: [],
+        notifications: [],
+        incidents: [],
+        settings: { locale: 'en', country: 'all', realtimeEnabled: true }
+    };
+
+    if (HAS_POSTGRES) {
+        await ensurePostgresSchema();
+        const [departments, employees, projects, tasks, notifications, incidents, settingsRows, enterpriseStateRows] = await Promise.all([
+            pgQuery('SELECT id, name, lead, parent, region, created_at FROM admin_departments ORDER BY created_at DESC'),
+            pgQuery('SELECT id, name, email, department, manager, country, phone, role, created_at FROM admin_employees ORDER BY created_at DESC'),
+            pgQuery('SELECT id, name, owner, status, deadline, progress, created_at, updated_at FROM admin_projects ORDER BY created_at DESC'),
+            pgQuery('SELECT id, title, project, assignee, priority, status, due_date, created_at, updated_at FROM admin_tasks ORDER BY created_at DESC'),
+            pgQuery('SELECT id, time, title, channel, status, audience, created_at FROM admin_notifications ORDER BY created_at DESC LIMIT 200'),
+            pgQuery('SELECT id, time, summary, severity, status, created_at FROM admin_incidents ORDER BY created_at DESC LIMIT 200'),
+            pgQuery('SELECT locale, country, realtime_enabled FROM admin_runtime_settings WHERE id = 1 LIMIT 1'),
+            pgQuery('SELECT state_json FROM admin_enterprise_state WHERE id = 1 LIMIT 1')
+        ]);
+
+        const settings = settingsRows.rows[0] || {};
+        const persistedState = parseEnterpriseStateJson((enterpriseStateRows.rows[0] || {}).state_json);
+        return {
+            users: Array.isArray(persistedState.users) ? persistedState.users : defaults.users,
+            roles: Array.isArray(persistedState.roles) ? persistedState.roles : defaults.roles,
+            apiKeys: Array.isArray(persistedState.apiKeys) ? persistedState.apiKeys : defaults.apiKeys,
+            security: Object.assign({}, defaults.security, persistedState.security || {}),
+            billingPlans: Array.isArray(persistedState.billingPlans) ? persistedState.billingPlans : defaults.billingPlans,
+            auditLogs: Array.isArray(persistedState.auditLogs) ? persistedState.auditLogs.slice(0, 300) : defaults.auditLogs,
+            analyticsHistory: Array.isArray(persistedState.analyticsHistory) ? persistedState.analyticsHistory.slice(-20) : defaults.analyticsHistory,
+            departments: departments.rows || [],
+            employees: employees.rows || [],
+            projects: projects.rows || [],
+            tasks: (tasks.rows || []).map(function (t) {
+                return Object.assign({}, t, { dueDate: t.due_date || null });
+            }),
+            notifications: notifications.rows || [],
+            incidents: incidents.rows || [],
+            settings: {
+                locale: settings.locale || 'en',
+                country: settings.country || 'all',
+                realtimeEnabled: settings.realtime_enabled !== 0
+            }
+        };
+    }
+
+    if (!db) return defaults;
+
+    const settingsRow = db.prepare('SELECT locale, country, realtime_enabled FROM admin_runtime_settings WHERE id = 1 LIMIT 1').get() || {};
+    const enterpriseStateRow = db.prepare('SELECT state_json FROM admin_enterprise_state WHERE id = 1 LIMIT 1').get() || {};
+    const persistedState = parseEnterpriseStateJson(enterpriseStateRow.state_json);
+    return {
+        users: Array.isArray(persistedState.users) ? persistedState.users : defaults.users,
+        roles: Array.isArray(persistedState.roles) ? persistedState.roles : defaults.roles,
+        apiKeys: Array.isArray(persistedState.apiKeys) ? persistedState.apiKeys : defaults.apiKeys,
+        security: Object.assign({}, defaults.security, persistedState.security || {}),
+        billingPlans: Array.isArray(persistedState.billingPlans) ? persistedState.billingPlans : defaults.billingPlans,
+        auditLogs: Array.isArray(persistedState.auditLogs) ? persistedState.auditLogs.slice(0, 300) : defaults.auditLogs,
+        analyticsHistory: Array.isArray(persistedState.analyticsHistory) ? persistedState.analyticsHistory.slice(-20) : defaults.analyticsHistory,
+        departments: db.prepare('SELECT id, name, lead, parent, region, created_at FROM admin_departments ORDER BY created_at DESC').all(),
+        employees: db.prepare('SELECT id, name, email, department, manager, country, phone, role, created_at FROM admin_employees ORDER BY created_at DESC').all(),
+        projects: db.prepare('SELECT id, name, owner, status, deadline, progress, created_at, updated_at FROM admin_projects ORDER BY created_at DESC').all(),
+        tasks: db.prepare('SELECT id, title, project, assignee, priority, status, due_date, created_at, updated_at FROM admin_tasks ORDER BY created_at DESC').all().map(function (t) {
+            return Object.assign({}, t, { dueDate: t.due_date || null });
+        }),
+        notifications: db.prepare('SELECT id, time, title, channel, status, audience, created_at FROM admin_notifications ORDER BY created_at DESC LIMIT 200').all(),
+        incidents: db.prepare('SELECT id, time, summary, severity, status, created_at FROM admin_incidents ORDER BY created_at DESC LIMIT 200').all(),
+        settings: {
+            locale: settingsRow.locale || 'en',
+            country: settingsRow.country || 'all',
+            realtimeEnabled: Number(settingsRow.realtime_enabled || 1) === 1
+        }
+    };
+}
+
+function getLatestIsoTimestamp(values) {
+    const timestamps = values
+        .map(function (value) { return new Date(value || '').getTime(); })
+        .filter(function (value) { return !Number.isNaN(value) && value > 0; });
+
+    if (!timestamps.length) return '';
+    return new Date(Math.max.apply(null, timestamps)).toISOString();
+}
+
+async function buildAdminDashboardPayload() {
+    const [registrations, contacts, careers, forms, enterprise] = await Promise.all([
+        fetchRegistrations(),
+        fetchContacts(),
+        fetchCareers(),
+        fetchAdminFormsList(),
+        fetchAdminEnterpriseData()
+    ]);
+
+    const totals = {
+        registrations: registrations.length,
+        contacts: contacts.length,
+        careers: careers.length,
+        forms: forms.length,
+        allRequests: registrations.length + contacts.length + careers.length
+    };
+
+    const leadSourceMap = registrations.reduce(function (acc, row) {
+        const key = String(row.source || 'unknown').trim() || 'unknown';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+    }, {});
+
+    const notifications = Array.isArray(enterprise.notifications) ? enterprise.notifications : [];
+    const incidents = Array.isArray(enterprise.incidents) ? enterprise.incidents : [];
+    const tasks = Array.isArray(enterprise.tasks) ? enterprise.tasks : [];
+    const monitoring = Object.assign({}, getRuntimeMonitoringSnapshot(), {
+        queueDepth: notifications.filter(function (item) {
+            return String(item.status || '').toLowerCase() === 'queued';
+        }).length,
+        openIncidents: incidents.filter(function (item) {
+            return !['resolved', 'closed'].includes(String(item.status || '').toLowerCase());
+        }).length
+    });
+
+    return {
+        generatedAt: new Date().toISOString(),
+        totals: totals,
+        tables: {
+            registrations: registrations,
+            contacts: contacts,
+            careers: careers
+        },
+        forms: forms,
+        enterprise: enterprise,
+        monitoring: monitoring,
+        summary: {
+            leadSources: Object.keys(leadSourceMap).map(function (key) {
+                return { source: key, count: leadSourceMap[key] };
+            }).sort(function (a, b) { return b.count - a.count; }),
+            latestActivityAt: getLatestIsoTimestamp(
+                registrations.map(function (item) { return item.registered_at; })
+                    .concat(contacts.map(function (item) { return item.sent_at; }))
+                    .concat(careers.map(function (item) { return item.applied_at; }))
+                    .concat(forms.map(function (item) { return item.updated_at || item.created_at; }))
+                    .concat(tasks.map(function (item) { return item.updated_at || item.created_at; }))
+                    .concat(notifications.map(function (item) { return item.time || item.created_at; }))
+                    .concat(incidents.map(function (item) { return item.time || item.created_at; }))
+            ),
+            activeEmployees: Array.isArray(enterprise.employees) ? enterprise.employees.length : 0,
+            openTasks: tasks.filter(function (item) { return String(item.status || '').toLowerCase() !== 'done'; }).length,
+            queuedNotifications: monitoring.queueDepth,
+            openIncidents: monitoring.openIncidents,
+            formsCount: forms.length
+        }
+    };
+}
+
+async function getAdminDashboardPayload(forceRefresh) {
+    if (!forceRefresh && adminDashboardCache.payload && adminDashboardCache.expiresAt > Date.now()) {
+        return adminDashboardCache.payload;
+    }
+
+    const payload = await buildAdminDashboardPayload();
+    adminDashboardCache.payload = payload;
+    adminDashboardCache.expiresAt = Date.now() + ADMIN_DASHBOARD_CACHE_TTL_MS;
+    return payload;
+}
+
+app.get('/api/admin/enterprise/bootstrap', requireAdminAuth, requireAdminAnyPermission([
+    'organization.manage',
+    'projects.manage',
+    'tasks.manage',
+    'notifications.manage',
+    'users.manage',
+    'audit.view',
+    'analytics.view'
+]), async (req, res) => {
+    try {
+        const data = await fetchAdminEnterpriseData();
+        return res.json({ success: true, data: data });
+    } catch (err) {
+        console.error('Admin enterprise bootstrap error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.get('/api/admin/dashboard', requireAdminAuth, async (req, res) => {
+    try {
+        const forceRefresh = String((req.query || {}).refresh || '').toLowerCase() === 'true';
+        const payload = await getAdminDashboardPayload(forceRefresh);
+        return res.json({ success: true, data: payload });
+    } catch (err) {
+        console.error('Admin dashboard error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.put('/api/admin/enterprise/state', requireAdminAuth, requireAdminAnyPermission([
+    'organization.manage',
+    'projects.manage',
+    'tasks.manage',
+    'notifications.manage',
+    'users.manage',
+    'audit.view',
+    'analytics.view'
+]), async (req, res) => {
+    try {
+        const incoming = ((req.body || {}).state && typeof (req.body || {}).state === 'object') ? (req.body || {}).state : {};
+        const payload = {
+            users: Array.isArray(incoming.users) ? incoming.users : [],
+            roles: Array.isArray(incoming.roles) ? incoming.roles : [],
+            apiKeys: Array.isArray(incoming.apiKeys) ? incoming.apiKeys : [],
+            security: (incoming.security && typeof incoming.security === 'object') ? incoming.security : {},
+            billingPlans: Array.isArray(incoming.billingPlans) ? incoming.billingPlans : [],
+            auditLogs: Array.isArray(incoming.auditLogs) ? incoming.auditLogs.slice(0, 300) : [],
+            analyticsHistory: Array.isArray(incoming.analyticsHistory) ? incoming.analyticsHistory.slice(-20) : []
+        };
+
+        const stateJson = JSON.stringify(payload);
+
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            await pgQuery(
+                'INSERT INTO admin_enterprise_state (id, state_json, updated_at) VALUES (1, $1, NOW()) ON CONFLICT (id) DO UPDATE SET state_json = EXCLUDED.state_json, updated_at = NOW()',
+                [stateJson]
+            );
+        } else if (db) {
+            db.prepare("INSERT INTO admin_enterprise_state (id, state_json, updated_at) VALUES (1, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET state_json = excluded.state_json, updated_at = datetime('now')").run(stateJson);
+        }
+
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('enterprise.state.updated', { updated: true });
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Update enterprise state error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.post('/api/admin/org/departments', requireAdminAuth, requireAdminPermission('organization.manage'), async (req, res) => {
+    try {
+        const name = String((req.body || {}).name || '').trim();
+        const lead = String((req.body || {}).lead || '').trim() || 'Unassigned';
+        const parent = String((req.body || {}).parent || '-').trim() || '-';
+        const region = String((req.body || {}).region || 'IN').trim() || 'IN';
+        if (!name) return res.status(400).json({ success: false, message: 'Department name is required.' });
+
+        let id = null;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('INSERT INTO admin_departments (name, lead, parent, region) VALUES ($1, $2, $3, $4) RETURNING id', [name, lead, parent, region]);
+            id = result.rows[0] && result.rows[0].id;
+        } else if (db) {
+            const result = db.prepare('INSERT INTO admin_departments (name, lead, parent, region) VALUES (?, ?, ?, ?)').run(name, lead, parent, region);
+            id = result.lastInsertRowid;
+        }
+
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('organization.department.created', { id: id, name: name });
+        return res.json({ success: true, id: id });
+    } catch (err) {
+        console.error('Create department error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.delete('/api/admin/org/departments/:id', requireAdminAuth, requireAdminPermission('organization.manage'), async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+        let deleted = false;
+
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('DELETE FROM admin_departments WHERE id = $1', [id]);
+            deleted = (result.rowCount || 0) > 0;
+        } else if (db) {
+            const result = db.prepare('DELETE FROM admin_departments WHERE id = ?').run(id);
+            deleted = (result.changes || 0) > 0;
+        }
+
+        if (!deleted) return res.status(404).json({ success: false, message: 'Department not found.' });
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('organization.department.deleted', { id: id });
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Delete department error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.post('/api/admin/projects', requireAdminAuth, requireAdminPermission('projects.manage'), async (req, res) => {
+    try {
+        const name = String((req.body || {}).name || '').trim();
+        const owner = String((req.body || {}).owner || 'Platform Owner').trim();
+        const status = String((req.body || {}).status || 'On Track').trim();
+        const progress = parseInt((req.body || {}).progress || 0, 10) || 0;
+        const deadline = (req.body || {}).deadline ? new Date((req.body || {}).deadline).toISOString() : null;
+        if (!name) return res.status(400).json({ success: false, message: 'Project name is required.' });
+
+        let id = null;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('INSERT INTO admin_projects (name, owner, status, deadline, progress) VALUES ($1, $2, $3, $4, $5) RETURNING id', [name, owner, status, deadline, progress]);
+            id = result.rows[0] && result.rows[0].id;
+        } else if (db) {
+            const result = db.prepare('INSERT INTO admin_projects (name, owner, status, deadline, progress) VALUES (?, ?, ?, ?, ?)').run(name, owner, status, deadline || '', progress);
+            id = result.lastInsertRowid;
+        }
+
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('project.created', { id: id, name: name });
+        return res.json({ success: true, id: id });
+    } catch (err) {
+        console.error('Create project error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.post('/api/admin/tasks', requireAdminAuth, requireAdminPermission('tasks.manage'), async (req, res) => {
+    try {
+        const title = String((req.body || {}).title || '').trim();
+        const project = String((req.body || {}).project || 'General').trim();
+        const assignee = String((req.body || {}).assignee || 'Unassigned').trim();
+        const priority = String((req.body || {}).priority || 'Medium').trim();
+        const status = String((req.body || {}).status || 'todo').trim();
+        const dueDate = (req.body || {}).dueDate ? new Date((req.body || {}).dueDate).toISOString() : null;
+        if (!title) return res.status(400).json({ success: false, message: 'Task title is required.' });
+
+        let id = null;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('INSERT INTO admin_tasks (title, project, assignee, priority, status, due_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id', [title, project, assignee, priority, status, dueDate]);
+            id = result.rows[0] && result.rows[0].id;
+        } else if (db) {
+            const result = db.prepare('INSERT INTO admin_tasks (title, project, assignee, priority, status, due_date) VALUES (?, ?, ?, ?, ?, ?)').run(title, project, assignee, priority, status, dueDate || '');
+            id = result.lastInsertRowid;
+        }
+
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('task.created', { id: id, title: title, project: project });
+        return res.json({ success: true, id: id });
+    } catch (err) {
+        console.error('Create task error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.post('/api/admin/tasks/:id/advance', requireAdminAuth, requireAdminPermission('tasks.manage'), async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+
+        const flow = ['todo', 'in_progress', 'review', 'done'];
+        let current = '';
+
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const found = await pgQuery('SELECT id, status FROM admin_tasks WHERE id = $1 LIMIT 1', [id]);
+            if (!found.rows.length) return res.status(404).json({ success: false, message: 'Task not found.' });
+            current = String(found.rows[0].status || 'todo');
+            const next = flow[Math.min(Math.max(flow.indexOf(current), 0) + 1, flow.length - 1)];
+            await pgQuery('UPDATE admin_tasks SET status = $1, updated_at = NOW() WHERE id = $2', [next, id]);
+            invalidateAdminDashboardCache();
+            broadcastAdminEvent('task.status.changed', { id: id, from: current, to: next });
+            return res.json({ success: true, status: next });
+        }
+
+        if (!db) return res.status(500).json({ success: false, message: 'No database configured.' });
+        const task = db.prepare('SELECT id, status FROM admin_tasks WHERE id = ? LIMIT 1').get(id);
+        if (!task) return res.status(404).json({ success: false, message: 'Task not found.' });
+        current = String(task.status || 'todo');
+        const next = flow[Math.min(Math.max(flow.indexOf(current), 0) + 1, flow.length - 1)];
+        db.prepare("UPDATE admin_tasks SET status = ?, updated_at = datetime('now') WHERE id = ?").run(next, id);
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('task.status.changed', { id: id, from: current, to: next });
+        return res.json({ success: true, status: next });
+    } catch (err) {
+        console.error('Advance task error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.post('/api/admin/notifications', requireAdminAuth, requireAdminPermission('notifications.manage'), async (req, res) => {
+    try {
+        const title = String((req.body || {}).title || '').trim();
+        const channel = String((req.body || {}).channel || 'email').trim();
+        const status = String((req.body || {}).status || 'queued').trim();
+        const audience = String((req.body || {}).audience || 'all').trim();
+        if (!title) return res.status(400).json({ success: false, message: 'Notification title is required.' });
+
+        let id = null;
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('INSERT INTO admin_notifications (title, channel, status, audience) VALUES ($1, $2, $3, $4) RETURNING id', [title, channel, status, audience]);
+            id = result.rows[0] && result.rows[0].id;
+        } else if (db) {
+            const result = db.prepare('INSERT INTO admin_notifications (title, channel, status, audience) VALUES (?, ?, ?, ?)').run(title, channel, status, audience);
+            id = result.lastInsertRowid;
+        }
+
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('notification.created', { id: id, title: title, channel: channel });
+        return res.json({ success: true, id: id });
+    } catch (err) {
+        console.error('Create notification error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.delete('/api/admin/notifications/:id', requireAdminAuth, requireAdminPermission('notifications.manage'), async (req, res) => {
+    try {
+        const id = parseAdminId(req, res);
+        if (!id) return;
+        let deleted = false;
+
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            const result = await pgQuery('DELETE FROM admin_notifications WHERE id = $1', [id]);
+            deleted = (result.rowCount || 0) > 0;
+        } else if (db) {
+            const result = db.prepare('DELETE FROM admin_notifications WHERE id = ?').run(id);
+            deleted = (result.changes || 0) > 0;
+        }
+
+        if (!deleted) return res.status(404).json({ success: false, message: 'Notification not found.' });
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('notification.deleted', { id: id });
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Delete notification error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.post('/api/admin/meeting-links', requireAdminAuth, requireAdminPermission('notifications.manage'), async (req, res) => {
+    try {
+        const title = String((req.body || {}).title || 'Team Sync').trim();
+        const audience = String((req.body || {}).audience || 'all').trim();
+        const meetingTime = (req.body || {}).meetingTime ? new Date((req.body || {}).meetingTime).toISOString() : new Date(Date.now() + 3600 * 1000).toISOString();
+        const meetingId = Math.random().toString(36).slice(2, 9);
+        const link = 'https://meet.qauliumai.in/' + meetingId;
+
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            await pgQuery('INSERT INTO admin_notifications (time, title, channel, status, audience) VALUES ($1, $2, $3, $4, $5)', [new Date().toISOString(), title, 'meeting', 'scheduled', audience]);
+        } else if (db) {
+            db.prepare('INSERT INTO admin_notifications (time, title, channel, status, audience) VALUES (?, ?, ?, ?, ?)').run(new Date().toISOString(), title, 'meeting', 'scheduled', audience);
+        }
+
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('meeting.link.generated', { title: title, audience: audience, link: link });
+        return res.json({ success: true, link: link, meetingTime: meetingTime });
+    } catch (err) {
+        console.error('Generate meeting link error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+app.patch('/api/admin/settings', requireAdminAuth, requireAdminPermission('settings.manage'), async (req, res) => {
+    try {
+        const locale = (req.body || {}).locale;
+        const country = (req.body || {}).country;
+        const realtimeEnabled = (req.body || {}).realtimeEnabled;
+
+        const nextLocale = String(locale || 'en').trim() || 'en';
+        const nextCountry = String(country || 'all').trim() || 'all';
+        const nextRealtime = realtimeEnabled === false ? 0 : 1;
+
+        if (HAS_POSTGRES) {
+            await ensurePostgresSchema();
+            await pgQuery(
+                'UPDATE admin_runtime_settings SET locale = $1, country = $2, realtime_enabled = $3, updated_at = NOW() WHERE id = 1',
+                [nextLocale, nextCountry, nextRealtime]
+            );
+        } else if (db) {
+            db.prepare("UPDATE admin_runtime_settings SET locale = ?, country = ?, realtime_enabled = ?, updated_at = datetime('now') WHERE id = 1").run(nextLocale, nextCountry, nextRealtime);
+        }
+
+        invalidateAdminDashboardCache();
+        broadcastAdminEvent('settings.updated', { locale: nextLocale, country: nextCountry, realtimeEnabled: nextRealtime === 1 });
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Update admin settings error:', err.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
 app.put('/api/admin/registrations/:id', requireAdminAuth, async (req, res) => {
     try {
         const id = parseAdminId(req, res);
@@ -1556,6 +2579,7 @@ app.put('/api/admin/registrations/:id', requireAdminAuth, async (req, res) => {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Registration not found.' });
         }
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Registration updated.' });
     } catch (err) {
         console.error('Admin registrations update error:', err.message);
@@ -1581,6 +2605,7 @@ app.delete('/api/admin/registrations/:id', requireAdminAuth, async (req, res) =>
         if (!deleted) {
             return res.status(404).json({ success: false, message: 'Registration not found.' });
         }
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Registration deleted.' });
     } catch (err) {
         console.error('Admin registrations delete error:', err.message);
@@ -1625,6 +2650,7 @@ app.put('/api/admin/contacts/:id', requireAdminAuth, async (req, res) => {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Contact message not found.' });
         }
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Contact message updated.' });
     } catch (err) {
         console.error('Admin contacts update error:', err.message);
@@ -1650,6 +2676,7 @@ app.delete('/api/admin/contacts/:id', requireAdminAuth, async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ success: false, message: 'Contact message not found.' });
         }
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Contact message deleted.' });
     } catch (err) {
         console.error('Admin contacts delete error:', err.message);
@@ -1722,6 +2749,7 @@ app.put('/api/admin/careers/:id', requireAdminAuth, async (req, res) => {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Career application not found.' });
         }
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Career application updated.' });
     } catch (err) {
         console.error('Admin careers update error:', err.message);
@@ -1747,6 +2775,7 @@ app.delete('/api/admin/careers/:id', requireAdminAuth, async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ success: false, message: 'Career application not found.' });
         }
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Career application deleted.' });
     } catch (err) {
         console.error('Admin careers delete error:', err.message);
@@ -1789,6 +2818,7 @@ app.post('/api/admin/careers/:id/action', requireAdminAuth, async (req, res) => 
             html: template.html
         });
 
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: `${action} email sent.` });
     } catch (err) {
         console.error('Admin career action error:', err.message);
@@ -1818,11 +2848,13 @@ app.post('/api/admin/forms', requireAdminAuth, async (req, res) => {
                 `INSERT INTO forms (title, description, slug, schema_json) VALUES ($1, $2, $3, $4) RETURNING id`,
                 [title.trim(), (description || '').trim(), slug, schemaJson]
             );
+            invalidateAdminDashboardCache();
             return res.json({ success: true, form: { id: result.rows[0].id, slug } });
         } else if (db) {
             const result = db.prepare(
                 `INSERT INTO forms (title, description, slug, schema_json) VALUES (?, ?, ?, ?)`
             ).run(title.trim(), (description || '').trim(), slug, schemaJson);
+            invalidateAdminDashboardCache();
             return res.json({ success: true, form: { id: result.lastInsertRowid, slug } });
         }
         return res.status(500).json({ success: false, message: 'No database configured.' });
@@ -1835,23 +2867,7 @@ app.post('/api/admin/forms', requireAdminAuth, async (req, res) => {
 // --- Admin: List Forms ---
 app.get('/api/admin/forms', requireAdminAuth, async (req, res) => {
     try {
-        let rows = [];
-        if (HAS_POSTGRES) {
-            await ensurePostgresSchema();
-            const result = await pgQuery('SELECT id, title, description, slug, is_active, created_at, updated_at FROM forms ORDER BY created_at DESC');
-            rows = result.rows;
-        } else if (db) {
-            rows = db.prepare('SELECT id, title, description, slug, is_active, created_at, updated_at FROM forms ORDER BY created_at DESC').all();
-        }
-        // attach response counts
-        for (const f of rows) {
-            if (HAS_POSTGRES) {
-                const cr = await pgQuery('SELECT COUNT(*)::int AS count FROM form_responses WHERE form_id = $1', [f.id]);
-                f.response_count = cr.rows[0].count;
-            } else if (db) {
-                f.response_count = db.prepare('SELECT COUNT(*) AS count FROM form_responses WHERE form_id = ?').get(f.id).count;
-            }
-        }
+        const rows = await fetchAdminFormsList();
         return res.json({ success: true, data: rows });
     } catch (err) {
         console.error('List forms error:', err.message);
@@ -1908,6 +2924,7 @@ app.put('/api/admin/forms/:id', requireAdminAuth, async (req, res) => {
             updated = (result.changes || 0) > 0;
         }
         if (!updated) return res.status(404).json({ success: false, message: 'Form not found.' });
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Form updated.' });
     } catch (err) {
         console.error('Update form error:', err.message);
@@ -1932,6 +2949,7 @@ app.delete('/api/admin/forms/:id', requireAdminAuth, async (req, res) => {
             deleted = (result.changes || 0) > 0;
         }
         if (!deleted) return res.status(404).json({ success: false, message: 'Form not found.' });
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Form deleted.' });
     } catch (err) {
         console.error('Delete form error:', err.message);
@@ -2047,6 +3065,7 @@ app.delete('/api/admin/forms/:id/responses/:rid', requireAdminAuth, async (req, 
             deleted = (result.changes || 0) > 0;
         }
         if (!deleted) return res.status(404).json({ success: false, message: 'Response not found.' });
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Response deleted.' });
     } catch (err) {
         console.error('Delete form response error:', err.message);
@@ -2114,6 +3133,31 @@ app.post('/api/forms/:slug/submit', async (req, res) => {
 
         const responseJson = JSON.stringify(data);
         const respondentEmail = String(email || '').trim().toLowerCase();
+        const usageEventId = buildUsageEventId('form_submit');
+
+        const formCreditCost = estimateCreditCost({
+            units: 1,
+            baseCredits: 0.03,
+            unitRate: 0.01,
+            regionMultiplier: 1,
+            priorityMultiplier: 1,
+            planDiscount: 1
+        });
+
+        try {
+            await applyDirectCreditCharge({
+                organizationId: DEFAULT_ORG_ID,
+                amount: formCreditCost.estimatedCredits,
+                reasonCode: 'form_submission',
+                sourceService: 'forms_api',
+                resourceType: 'forms.submit',
+                usageEventId: usageEventId,
+                idempotencyKey: usageEventId,
+                metadata: { slug: slug }
+            });
+        } catch (creditErr) {
+            return res.status(402).json({ success: false, message: creditErr.message || 'Insufficient credits to submit this form.' });
+        }
 
         if (HAS_POSTGRES) {
             await pgQuery(
@@ -2126,6 +3170,23 @@ app.post('/api/forms/:slug/submit', async (req, res) => {
             ).run(form.id, responseJson, respondentEmail);
         }
 
+        await recordUsageLog({
+            usageEventId: usageEventId,
+            organizationId: DEFAULT_ORG_ID,
+            service: 'forms',
+            operation: 'submit',
+            resourceType: 'forms.submit',
+            unitType: 'request',
+            quantity: 1,
+            unitPrice: formCreditCost.breakdown.unitRate,
+            multiplier: 1,
+            estimatedCredits: formCreditCost.estimatedCredits,
+            actualCredits: formCreditCost.estimatedCredits,
+            status: 'completed',
+            metadata: { slug: slug, formId: form.id }
+        });
+
+        invalidateAdminDashboardCache();
         return res.json({ success: true, message: 'Response submitted successfully.' });
     } catch (err) {
         console.error('Form submit error:', err.message);
@@ -2155,6 +3216,27 @@ app.post('/api/admin/email/send', requireAdminAuth, async (req, res) => {
 
         const htmlBody = String(body || '').replace(/cid:qualium-logo/g, 'https://qauliumai.in/logo-white.png');
 
+        const usageEventId = buildUsageEventId('bulk_email');
+        const emailCreditCost = estimateCreditCost({
+            units: recipients.length,
+            baseCredits: 0.2,
+            unitRate: 0.02,
+            regionMultiplier: 1,
+            priorityMultiplier: 1,
+            planDiscount: 1
+        });
+
+        await applyDirectCreditCharge({
+            organizationId: DEFAULT_ORG_ID,
+            amount: emailCreditCost.estimatedCredits,
+            reasonCode: 'bulk_email_send',
+            sourceService: 'admin_email',
+            resourceType: 'notifications.bulk_email',
+            usageEventId: usageEventId,
+            idempotencyKey: usageEventId,
+            metadata: { audience: audience || 'all', recipients: recipients.length }
+        });
+
         const chunks = chunkArray(recipients, 50);
         for (const chunk of chunks) {
             await transporter.sendMail({
@@ -2165,6 +3247,22 @@ app.post('/api/admin/email/send', requireAdminAuth, async (req, res) => {
                 html: htmlBody
             });
         }
+
+        await recordUsageLog({
+            usageEventId: usageEventId,
+            organizationId: DEFAULT_ORG_ID,
+            service: 'notifications',
+            operation: 'bulk_email',
+            resourceType: 'notifications.bulk_email',
+            unitType: 'recipient',
+            quantity: recipients.length,
+            unitPrice: emailCreditCost.breakdown.unitRate,
+            multiplier: 1,
+            estimatedCredits: emailCreditCost.estimatedCredits,
+            actualCredits: emailCreditCost.estimatedCredits,
+            status: 'completed',
+            metadata: { audience: audience || 'all' }
+        });
 
         return res.json({ success: true, message: 'Email sent successfully.', sent: recipients.length });
     } catch (err) {
@@ -2299,7 +3397,7 @@ app.get('/api/contacts', requireAdminAuth, async (req, res) => {
     }
 });
 
-// GET /api/careers — Admin endpoint to view all career applications
+// POST /api/careers — Admin endpoint to view all career applications
 app.get('/api/careers', requireAdminAuth, async (req, res) => {
     if (!HAS_POSTGRES && !db) return res.json({ success: true, count: 0, data: [], note: 'No persistent DB configured.' });
     try {
@@ -2318,9 +3416,19 @@ app.get('/api/careers', requireAdminAuth, async (req, res) => {
     }
 });
 
+// --- Employee Portal API Routes ---
+app.post('/api/send-otp', require('./api/send-otp.js'));
+app.post('/api/verify-otp', require('./api/verify-otp.js'));
+app.post('/api/setup-totp', require('./api/setup-totp.js'));
+app.post('/api/verify-totp', require('./api/verify-totp.js'));
+app.post('/api/invite', require('./api/invite.js'));
+
 // --- Start Server (skip on Vercel) ---
 if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
+    const httpServer = http.createServer(app);
+    attachAdminWebSocketServer(httpServer);
+
+    httpServer.listen(PORT, () => {
         console.log(`\n  ✦ Qaulium AI server running at http://localhost:${PORT}\n`);
         console.log(`  Routes:`);
         console.log(`    GET  /                   → Landing page`);
@@ -2338,7 +3446,11 @@ if (!process.env.VERCEL) {
         console.log(`    GET  /api/forms/:slug    → Public form data`);
         console.log(`    POST /api/forms/:slug/submit → Public form submit`);
         console.log(`    GET  /forms/:slug        → Public form page`);
-        console.log(`    POST /api/admin/email/send → Admin bulk email\n`);
+        console.log(`    POST /api/admin/email/send → Admin bulk email`);
+        console.log(`    GET  /api/admin/enterprise/bootstrap → Enterprise payload`);
+        console.log(`    POST /api/send-otp      → Employee Portal OTP send`);
+        console.log(`    POST /api/verify-otp    → Employee Portal OTP verify`);
+        console.log(`    WS   /ws/admin           → Admin realtime events\n`);
     });
 }
 
