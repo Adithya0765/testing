@@ -1,0 +1,30 @@
+# Qaulium AI - Robots.txt
+# https://qauliumai.in/robots.txt
+
+# Allow all robots
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /.git/
+Disallow: /node_modules/
+Disallow: /*.py
+Disallow: /*.sh
+Disallow: /config/
+
+# Google Search Console
+User-agent: Googlebot
+Allow: /
+
+# Bing Search
+User-agent: Bingbot
+Allow: /
+
+# Yandex
+User-agent: YandexBot
+Allow: /
+
+# Sitemap
+Sitemap: https://qauliumai.in/sitemap.xml
+
+# Crawl delay for all bots (in seconds)
+Crawl-delay: 1
