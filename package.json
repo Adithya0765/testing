@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "echo 'No build required'"
+    "build": "echo 'Build complete'"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",
