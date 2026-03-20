@@ -1,27 +1,9 @@
 {
   "name": "qualium-ai-landing",
   "version": "1.0.0",
-  "description": "Qaulium AI Landing Page with Registration Backend",
-  "main": "server.js",
+  "description": "Qaulium AI Landing Page",
   "scripts": {
-    "build": "node scripts/build-public.js",
-    "vercel-build": "npm run build",
-    "start": "node server.js",
-    "dev": "node server.js",
-    "test:api-routes": "node tests/api-route-smoke.test.js",
-    "test:admin-enterprise": "node tests/admin-enterprise-integration.test.js",
-    "test:admin-rbac": "node tests/admin-rbac-matrix.test.js"
-  },
-  "dependencies": {
-    "@vercel/postgres": "^0.10.0",
-    "dotenv": "^17.3.1",
-    "express": "^4.21.0",
-    "express-rate-limit": "^7.4.0",
-    "nodemailer": "^6.9.0",
-    "pg": "^8.13.1",
-    "ws": "^8.18.0"
-  },
-  "optionalDependencies": {
-    "better-sqlite3": "^11.0.0"
+    "start": "npm run dev",
+    "dev": "npx http-server"
   }
 }
