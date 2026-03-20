@@ -249,9 +249,19 @@ app.use((req, res, next) => {
     });
     next();
 });
-app.use(express.static(path.join(__dirname), {
-    index: 'index.html',
-    extensions: ['html']
+
+// Improved static file serving for Vercel and local deployment
+const staticDirPath = IS_VERCEL ? path.join(__dirname) : path.join(__dirname);
+app.use(express.static(staticDirPath, {
+    extensions: ['html', 'css', 'js', 'json', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico'],
+    etag: false,
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+        } else {
+            res.setHeader('Cache-Control', 'public, max-age=31536000');
+        }
+    }
 }));
 
 app.get('/api/health', (req, res) => {
@@ -3494,5 +3504,26 @@ if (!process.env.VERCEL) {
         console.log(`    WS   /ws/admin           → Admin realtime events\n`);
     });
 }
+
+// --- Catch-all route: Serve index.html for all non-API routes ---
+app.get('/', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    const indexPath = path.join(__dirname, 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            return res.status(404).json({ success: false, message: 'Not found' });
+        }
+    });
+});
+
+// Fallback error handler
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    res.status(500).json({ 
+        success: false, 
+        message: process.env.NODE_ENV === 'production' ? 'Internal error' : err.message 
+    });
+});
 
 module.exports = app;
