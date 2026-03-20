@@ -16,6 +16,8 @@
 !vercel.json
 !package.json
 !package-lock.json
+!server.js
+!api/
 !SEO_OPTIMIZATION_GUIDE.md
 !PRODUCTION_DEPLOYMENT.md
 !README.md
