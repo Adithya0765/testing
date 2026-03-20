@@ -1,15 +1,11 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/server.js" },
-    { "src": "/static/(.*)", "dest": "/static/$1" },
-    { "src": "/(.*).html", "dest": "/$1.html" },
-    { "src": "/careers", "dest": "/careers.html" },
-    { "src": "/careers/apply", "dest": "/careers-apply.html" },
-    { "src": "/registration", "dest": "/registration.html" },
-    { "src": "/pre-register", "dest": "/registration.html" },
-    { "src": "/pre-registration", "dest": "/registration.html" },
-    { "src": "/(.*)", "dest": "/server.js" }
+  "rewrites": [
+    { "source": "/careers", "destination": "/careers.html" },
+    { "source": "/careers/apply", "destination": "/careers-apply.html" },
+    { "source": "/registration", "destination": "/registration.html" },
+    { "source": "/pre-register", "destination": "/registration.html" },
+    { "source": "/pre-registration", "destination": "/registration.html" }
   ]
 }
