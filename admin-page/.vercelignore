@@ -1,0 +1,10 @@
+# Keep admin deployment minimal
+.git/
+.vscode/
+.vercel/
+node_modules/
+
+# Local-only env and docs
+.env.local
+README.md
+ADMIN_DASHBOARD_PRD.md

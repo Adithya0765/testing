@@ -1,0 +1,28 @@
+# Exclude unrelated workspaces and heavy local artifacts from landing-page deploy
+Cloud Credit System/
+Employee Portal/
+Qaulium-studio Ide/
+Qstudio landing Clone/
+_qstudio_publish/
+admin-page/
+
+# Local/dev directories
+.git/
+.vscode/
+.venv/
+node_modules/
+
+# Tests, backups, and local DB artifacts
+tests/
+*.dump
+*.db
+*.db-shm
+*.db-wal
+*.bak
+restore_output.txt
+.tmp-test-api-routes.txt
+
+# Non-runtime assets not needed by landing deploy
+*.pdf
+Screenshot_*.png
+Favicon (2).png
