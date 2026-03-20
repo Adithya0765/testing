@@ -932,7 +932,7 @@ try {
 }
 
 // --- Initialize Password Reset Module ---
-const passwordResetModule = require('../api/password-reset.js');
+const passwordResetModule = require('./api/password-reset.js');
 passwordResetModule.initializePasswordReset(db, HAS_POSTGRES, pgQuery, transporter, SMTP_FROM);
 
 // --- Email Template ---
@@ -3435,11 +3435,11 @@ app.get('/api/careers', requireAdminAuth, async (req, res) => {
 });
 
 // --- Employee Portal API Routes ---
-app.post('/api/send-otp', require('../api/send-otp.js'));
-app.post('/api/verify-otp', require('../api/verify-otp.js'));
-app.post('/api/setup-totp', require('../api/setup-totp.js'));
-app.post('/api/verify-totp', require('../api/verify-totp.js'));
-app.post('/api/invite', require('../api/invite.js'));
+app.post('/api/send-otp', require('./api/send-otp.js'));
+app.post('/api/verify-otp', require('./api/verify-otp.js'));
+app.post('/api/setup-totp', require('./api/setup-totp.js'));
+app.post('/api/verify-totp', require('./api/verify-totp.js'));
+app.post('/api/invite', require('./api/invite.js'));
 
 // --- Password Reset Routes ---
 app.post('/api/password-reset/request', passwordResetModule.handlePasswordResetRequest);
