@@ -1,9 +1,24 @@
 {
   "name": "qualium-ai-landing",
   "version": "1.0.0",
-  "description": "Qaulium AI Landing Page",
+  "description": "Qaulium AI Landing Page with Backend APIs",
+  "main": "server.js",
   "scripts": {
-    "start": "npm run dev",
-    "dev": "npx http-server"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'No build required'"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0",
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^17.3.1",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "nodemailer": "^6.9.0",
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }

@@ -1,13 +1,24 @@
 {
   "version": 2,
-  "buildCommand": "",
-  "outputDirectory": ".",
-  "cleanUrls": true,
+  "buildCommand": "echo 'No build needed'",
+  "functions": {
+    "api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "server.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/server.js" },
     { "source": "/careers", "destination": "/careers.html" },
     { "source": "/careers/apply", "destination": "/careers-apply.html" },
     { "source": "/registration", "destination": "/registration.html" },
     { "source": "/pre-register", "destination": "/registration.html" },
-    { "source": "/pre-registration", "destination": "/registration.html" }
-  ]
+    { "source": "/pre-registration", "destination": "/registration.html" },
+    { "source": "/(.*)", "destination": "/$1.html" }
+  ],
+  "cleanUrls": true
 }
