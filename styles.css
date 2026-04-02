@@ -1476,7 +1476,7 @@ img { max-width: 100%; display: block; }
     display: flex;
     gap: 24px;
     padding: 20px 0;
-    animation: infiniteScroll 60s linear infinite;
+    animation: infiniteScroll 30s linear infinite;
     will-change: transform;
 }
 
