@@ -57,7 +57,7 @@ main {
     height: 100%;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.15;
+    opacity: 0.35;
 }
 
 a { text-decoration: none; color: inherit; }

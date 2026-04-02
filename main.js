@@ -832,12 +832,12 @@
         canvas.style.height = '100%';
         canvas.style.pointerEvents = 'none';
         canvas.style.zIndex = '0';
-        canvas.style.opacity = '0.15';
+        canvas.style.opacity = '0.35';
         document.body.insertBefore(canvas, document.body.firstChild);
 
         var ctx = canvas.getContext('2d');
         var particles = [];
-        var particleCount = 40;
+        var particleCount = 60;
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -887,11 +887,11 @@
                     var dy = particles[i].y - particles[j].y;
                     var distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    if (distance < 120) {
+                    if (distance < 150) {
                         ctx.beginPath();
                         ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-text-primary').trim() || '#ffffff';
-                        ctx.globalAlpha = (1 - distance / 120) * 0.15;
-                        ctx.lineWidth = 0.5;
+                        ctx.globalAlpha = (1 - distance / 150) * 0.3;
+                        ctx.lineWidth = 0.8;
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
                         ctx.stroke();
