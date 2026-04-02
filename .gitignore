@@ -22,6 +22,7 @@
 !server.js
 !api/
 !routes/
+!scripts/
 !SEO_OPTIMIZATION_GUIDE.md
 !PRODUCTION_DEPLOYMENT.md
 !README.md

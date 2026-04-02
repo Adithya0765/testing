@@ -1,10 +1,47 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "/api/index.js"
+    },
+    {
+      "source": "/hardware",
+      "destination": "/hardware.html"
+    },
+    {
+      "source": "/careers",
+      "destination": "/careers.html"
+    },
+    {
+      "source": "/careers/apply",
+      "destination": "/careers-apply.html"
+    },
+    {
+      "source": "/registration",
+      "destination": "/registration.html"
+    },
+    {
+      "source": "/pre-register",
+      "destination": "/registration.html"
+    },
+    {
+      "source": "/pre-registration",
+      "destination": "/registration.html"
+    },
+    {
+      "source": "/password-reset",
+      "destination": "/password-reset.html"
+    },
+    {
+      "source": "/forms",
+      "destination": "/forms.html"
+    },
+    {
+      "source": "/forms/:slug",
+      "destination": "/forms.html"
     }
   ]
 }
