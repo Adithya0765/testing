@@ -372,6 +372,28 @@ app.get('/pre-registration', (req, res) => {
     res.sendFile(path.join(__dirname, 'registration.html'));
 });
 
+function normalizeAllowedOrigin(rawValue) {
+    const value = String(rawValue || '').trim();
+    if (!value) return '';
+    try {
+        return new URL(value).origin;
+    } catch (_err) {
+        return value;
+    }
+}
+
+function collectAllowedOrigins(values) {
+    const origins = new Set();
+    (values || []).forEach((value) => {
+        if (!value) return;
+        String(value).split(',').forEach((item) => {
+            const normalized = normalizeAllowedOrigin(item);
+            if (normalized) origins.add(normalized);
+        });
+    });
+    return origins;
+}
+
 // CORS for separate admin subdomain app
 app.use((req, res, next) => {
     if (!req.path.startsWith('/api/admin')) return next();
@@ -401,6 +423,63 @@ app.use((req, res, next) => {
 
     if (req.method === 'OPTIONS') {
         return res.status(204).send('');
+    }
+
+    return next();
+});
+
+const employeePortalCorsPaths = new Set([
+    '/api/send-otp',
+    '/api/verify-otp',
+    '/api/setup-totp',
+    '/api/verify-totp',
+    '/api/invite'
+]);
+
+const employeePortalAllowedOrigins = collectAllowedOrigins([
+    process.env.FRONTEND_URL,
+    process.env.ADMIN_APP_ORIGIN,
+    process.env.CORS_ALLOWED_ORIGINS,
+    'https://qauliumai.in',
+    'https://www.qauliumai.in',
+    'https://workspace.qauliumai.in',
+    'https://admin.qauliumai.in',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'http://localhost:5501',
+    'http://127.0.0.1:5501'
+]);
+
+app.use((req, res, next) => {
+    if (!employeePortalCorsPaths.has(req.path)) return next();
+
+    const origin = req.headers.origin;
+    const originAllowed = !!(origin && employeePortalAllowedOrigins.has(origin));
+
+    if (originAllowed) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Vary', 'Origin');
+        res.header('Access-Control-Allow-Credentials', 'true');
+    }
+
+    const requestedHeaders = req.headers['access-control-request-headers'];
+    res.header('Access-Control-Allow-Headers', requestedHeaders || 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Max-Age', '86400');
+
+    if (req.method === 'OPTIONS') {
+        if (origin && !originAllowed) {
+            return res.status(403).json({ success: false, message: 'Origin not allowed.' });
+        }
+        return res.status(204).send('');
+    }
+
+    if (origin && !originAllowed) {
+        return res.status(403).json({ success: false, message: 'Origin not allowed.' });
     }
 
     return next();
@@ -1040,7 +1119,7 @@ try {
 let passwordResetModule;
 try {
     passwordResetModule = require('./api/password-reset.js');
-    passwordResetModule.initializePasswordReset(db, HAS_POSTGRES, pgQuery, transporter, SMTP_FROM);
+    passwordResetModule.initializePasswordReset(db, HAS_POSTGRES, pgQuery, transporter, SMTP_FROM, ensurePostgresSchema);
 } catch (err) {
     console.error('Password reset module initialization failed:', err.message);
     // Provide fallback so server doesn't crash
@@ -3775,7 +3854,7 @@ try {
     app.post('/api/verify-otp', require('./api/verify-otp.js'));
     app.post('/api/setup-totp', require('./api/setup-totp.js'));
     app.post('/api/verify-totp', require('./api/verify-totp.js'));
-    app.post('/api/invite', require('./api/invite.js'));
+    app.post('/api/invite', requireAdminAuth, require('./api/invite.js'));
 } catch (err) {
     console.error('Employee portal API routes initialization failed:', err.message);
 }

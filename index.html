@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qaulium AI</title>
-    <meta name="description" content="Qaulium AI builds software-defined quantum infrastructure — minimal, modular, and production-ready for the next generation of intelligent systems.">
+    <meta name="description" content="Qaulium AI builds software-defined quantum infrastructure for modern teams.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -18,17 +18,25 @@
 
     <header class="site-header" id="siteHeader">
         <nav class="nav-container">
-            <a href="#" class="nav-logo">
+            <a href="#hero" class="nav-logo">
                 <img class="logo-mark" src="logo-white.png" alt="Qaulium AI" height="36">
             </a>
             <ul class="nav-links">
-                <li><a href="#architecture">Platform</a></li>
-                <li><a href="hardware.html">Hardware</a></li>
-                <li><a href="#developer">Developer</a></li>
-                <li><a href="#research">Research</a></li>
-                <li><a href="registration.html">Pre-Register</a></li>
-                <li><a href="careers.html">Careers</a></li>
-                <li><a href="#contact" class="nav-cta">Contact Us</a></li>
+                <li><a href="#hero">Home</a></li>
+                <li class="nav-dropdown" id="productDropdown">
+                    <button class="nav-dropdown-toggle" id="productMenuToggle" aria-expanded="false" aria-controls="productMenu">
+                        Products
+                        <span class="dropdown-caret" aria-hidden="true">v</span>
+                    </button>
+                    <ul class="nav-dropdown-menu" id="productMenu">
+                        <li><a href="#products">Product Overview</a></li>
+                        <li><a href="hardware.html">NIRVANA Hardware</a></li>
+                        <li><a href="registration.html">Pre-Registration</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                    </ul>
+                </li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="#" class="nav-cta">Get Early Access</a></li>
             </ul>
             <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
                 <svg class="theme-icon theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -46,317 +54,119 @@
 
     <div class="mobile-nav" id="mobileNav">
         <ul class="mobile-nav-links">
-            <li><a href="#architecture">Platform</a></li>
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#products">Products</a></li>
             <li><a href="hardware.html">Hardware</a></li>
-            <li><a href="#developer">Developer</a></li>
-            <li><a href="#research">Research</a></li>
             <li><a href="registration.html">Pre-Register</a></li>
             <li><a href="careers.html">Careers</a></li>
-            <li><a href="#contact">Contact Us</a></li>
+            <li><a href="#contact">Contact</a></li>
         </ul>
     </div>
 
     <main>
 
-        <!-- Hero -->
-        <section class="hero" id="hero">
+        <section class="hero hero-simple" id="hero">
             <div class="container">
-                <div class="hero-split">
-                    <div class="hero-content">
-                        <p class="hero-eyebrow">Quantum Software Platform</p>
-                        <h1 class="hero-headline">The Unified<br>Quantum IDE.</h1>
-                        <p class="hero-sub">Build, debug with time-travel, and optimize algorithms across all major frameworks directly in your browser.</p>
-                        <div class="hero-actions">
-                            <a href="#architecture" class="btn btn-primary">Explore Platform <span class="btn-icon">&rarr;</span></a>
-                            <a href="registration" class="btn btn-secondary">Pre-Register</a>
-                        </div>
-                    </div>
-                    <div class="hero-visual">
-                        <div class="qc-circuit" id="qcCircuit"></div>
+                <div class="hero-content">
+                    <p class="hero-eyebrow">Qaulium AI Platform</p>
+                    <h1 class="hero-headline">Quantum tools, kept simple.</h1>
+                    <p class="hero-sub">A focused stack for teams building quantum software: one clean workspace, one hardware path, one onboarding flow.</p>
+                    <div class="hero-actions">
+                        <a href="#products" class="btn btn-primary">Explore Products <span class="btn-icon">&rarr;</span></a>
+                        <a href="registration.html" class="btn btn-secondary">Pre-Register</a>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Platform Architecture -->
-        <section class="section section-architecture" id="architecture">
+        <section class="section section-products" id="products">
             <div class="container">
-                <div class="section-label">Platform Architecture</div>
-                <h2 class="section-heading">Qaulium AI Studio</h2>
-                <p class="section-intro">A unified quantum development platform with 500+ features. Visual circuit building, AI-powered debugging, multi-framework support, and hardware-agnostic execution — all in your browser.</p>
+                <div class="section-head">
+                    <p class="section-label">Product Ecosystem</p>
+                    <h2 class="section-heading">A complete operational surface for product execution.</h2>
+                    <p class="section-intro">Following the second repository structure, this section is organized as layered product interfaces so users can compare paths quickly and move to action.</p>
+                </div>
 
-                <div class="architecture-grid">
-                    <div class="arch-block">
-                        <div class="arch-diagram">
-                            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="15" y="15" width="90" height="90" rx="6" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
-                                <rect x="25" y="25" width="30" height="30" rx="3" stroke="#2563EB" stroke-width="1.5" opacity="0.6"/>
-                                <rect x="65" y="25" width="30" height="30" rx="3" stroke="#2563EB" stroke-width="1.5" opacity="0.4"/>
-                                <rect x="25" y="65" width="30" height="30" rx="3" stroke="#2563EB" stroke-width="1.5" opacity="0.4"/>
-                                <rect x="65" y="65" width="30" height="30" rx="3" stroke="#2563EB" stroke-width="1.5" opacity="0.6"/>
-                                <line x1="55" y1="40" x2="65" y2="40" stroke="#2563EB" stroke-width="1" opacity="0.4"/>
-                                <line x1="40" y1="55" x2="40" y2="65" stroke="#2563EB" stroke-width="1" opacity="0.4"/>
-                                <line x1="80" y1="55" x2="80" y2="65" stroke="#2563EB" stroke-width="1" opacity="0.4"/>
-                                <line x1="55" y1="80" x2="65" y2="80" stroke="#2563EB" stroke-width="1" opacity="0.4"/>
-                            </svg>
+                <div class="layer-showcase">
+                    <article class="layer-surface">
+                        <div class="layer-surface-head">
+                            <h3>Studio Access Flow</h3>
+                            <p>A focused entry path for teams starting with Qaulium Studio and structured onboarding.</p>
                         </div>
-                        <div class="arch-content">
-                            <span class="arch-number">01</span>
-                            <h3>Visual Circuit Builder & IDE</h3>
-                            <p>Drag-and-drop circuit editor with bi-directional code sync. Full Monaco-based IDE with quantum-aware autocomplete, linting, and multi-framework support for Qiskit, Cirq, PennyLane, Q#, and more.</p>
+                        <div class="diagnostic-timeline" aria-hidden="true">
+                            <span class="diag-node active"></span>
+                            <span class="diag-node"></span>
+                            <span class="diag-node"></span>
+                            <span class="diag-node branch"></span>
+                            <span class="diag-node"></span>
                         </div>
-                    </div>
+                        <div class="surface-meta">
+                            <span>Route: Studio</span>
+                            <span><a class="product-link" href="registration.html">Request Access</a></span>
+                        </div>
+                    </article>
 
-                    <div class="arch-block">
-                        <div class="arch-diagram">
-                            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="60" cy="60" r="30" stroke="#2563EB" stroke-width="1.5" opacity="0.3"/>
-                                <circle cx="60" cy="60" r="15" stroke="#2563EB" stroke-width="2" opacity="0.6"/>
-                                <circle cx="60" cy="60" r="4" fill="#2563EB" opacity="0.4"/>
-                                <line x1="60" y1="15" x2="60" y2="30" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <line x1="60" y1="90" x2="60" y2="105" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <line x1="15" y1="60" x2="30" y2="60" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <line x1="90" y1="60" x2="105" y2="60" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <circle cx="60" cy="30" r="3" fill="#2563EB" opacity="0.5"/>
-                                <circle cx="90" cy="60" r="3" fill="#2563EB" opacity="0.5"/>
-                                <circle cx="60" cy="90" r="3" fill="#2563EB" opacity="0.5"/>
-                                <circle cx="30" cy="60" r="3" fill="#2563EB" opacity="0.5"/>
-                            </svg>
+                    <article class="layer-surface">
+                        <div class="layer-surface-head">
+                            <h3>Hardware Evaluation</h3>
+                            <p>Dedicated path for teams evaluating NIRVANA hardware capabilities and deployment fit.</p>
                         </div>
-                        <div class="arch-content">
-                            <span class="arch-number">02</span>
-                            <h3>vQPU Simulation Engine</h3>
-                            <p>Scalable virtual quantum processor supporting state vector, density matrix, and tensor network simulations. Includes live digital twins of IBM, IonQ, and Rigetti hardware updated daily from calibration data.</p>
+                        <div class="governance-grid" aria-hidden="true">
+                            <div><strong>Track</strong><em>Hardware</em></div>
+                            <div><strong>Focus</strong><em>Performance</em></div>
+                            <div><strong>Mode</strong><em>Pilot</em></div>
+                            <div><strong>Scope</strong><em>Enterprise</em></div>
                         </div>
-                    </div>
+                        <div class="surface-meta">
+                            <span>Route: NIRVANA</span>
+                            <span><a class="product-link" href="hardware.html">View Hardware</a></span>
+                        </div>
+                    </article>
 
-                    <div class="arch-block">
-                        <div class="arch-diagram">
-                            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="20" y="30" width="80" height="60" rx="5" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
-                                <circle cx="45" cy="55" r="10" stroke="#2563EB" stroke-width="1.5" opacity="0.6"/>
-                                <path d="M40 55 L45 50 L50 55 L45 60 Z" fill="#2563EB" opacity="0.2"/>
-                                <circle cx="75" cy="55" r="10" stroke="#2563EB" stroke-width="1.5" opacity="0.4"/>
-                                <line x1="55" y1="55" x2="65" y2="55" stroke="#2563EB" stroke-width="1.5" opacity="0.5"/>
-                                <line x1="75" y1="45" x2="75" y2="35" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <line x1="45" y1="65" x2="45" y2="75" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <text x="43" y="58" font-size="8" fill="#2563EB" opacity="0.7">AI</text>
-                            </svg>
+                    <article class="layer-surface">
+                        <div class="layer-surface-head">
+                            <h3>Team Onboarding</h3>
+                            <p>Operational handoff path for recruiting, onboarding, and role alignment across teams.</p>
                         </div>
-                        <div class="arch-content">
-                            <span class="arch-number">03</span>
-                            <h3>Quantum AI Co-Scientist</h3>
-                            <p>AI assistant that generates circuits from natural language, optimizes algorithms, diagnoses errors, and reviews quantum code. Includes paper-to-circuit conversion and automated cost estimation across providers.</p>
+                        <div class="optimization-bars" aria-hidden="true">
+                            <div class="opt-bar"><span>Readiness</span><i style="width: 78%"></i></div>
+                            <div class="opt-bar"><span>Speed</span><i style="width: 86%"></i></div>
+                            <div class="opt-bar"><span>Coverage</span><i style="width: 70%"></i></div>
                         </div>
-                    </div>
+                        <div class="surface-meta">
+                            <span>Route: Careers</span>
+                            <span><a class="product-link" href="careers.html">Open Roles</a></span>
+                        </div>
+                    </article>
 
-                    <div class="arch-block">
-                        <div class="arch-diagram">
-                            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <line x1="20" y1="35" x2="100" y2="35" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <line x1="20" y1="60" x2="100" y2="60" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <line x1="20" y1="85" x2="100" y2="85" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                <circle cx="40" cy="35" r="5" stroke="#2563EB" stroke-width="1.5" opacity="0.6"/>
-                                <circle cx="60" cy="35" r="5" stroke="#2563EB" stroke-width="1.5" opacity="0.4"/>
-                                <circle cx="80" cy="60" r="5" stroke="#2563EB" stroke-width="1.5" opacity="0.6"/>
-                                <circle cx="50" cy="85" r="5" stroke="#2563EB" stroke-width="1.5" opacity="0.4"/>
-                                <circle cx="70" cy="85" r="5" stroke="#2563EB" stroke-width="1.5" opacity="0.6"/>
-                                <line x1="60" y1="40" x2="60" y2="55" stroke="#2563EB" stroke-width="1" opacity="0.4" stroke-dasharray="2,2"/>
-                                <line x1="80" y1="65" x2="80" y2="80" stroke="#2563EB" stroke-width="1" opacity="0.4" stroke-dasharray="2,2"/>
-                                <rect x="35" y="30" width="10" height="10" rx="2" stroke="#2563EB" stroke-width="0.5" opacity="0.2"/>
-                            </svg>
+                    <article class="layer-surface">
+                        <div class="layer-surface-head">
+                            <h3>Contact Routing</h3>
+                            <p>Simple query routing so requests flow into the right product path from day one.</p>
                         </div>
-                        <div class="arch-content">
-                            <span class="arch-number">04</span>
-                            <h3>Time-Travel Debugger</h3>
-                            <p>Step forward and backward through gate execution with full state inspection at every point. Branch at any step to explore alternative circuits, set conditional breakpoints, and automatically bisect fidelity issues.</p>
+                        <div class="routing-mesh" aria-hidden="true">
+                            <span class="route-node">A</span>
+                            <span class="route-link"></span>
+                            <span class="route-node">B</span>
+                            <span class="route-link"></span>
+                            <span class="route-node">C</span>
                         </div>
-                    </div>
+                        <div class="surface-meta">
+                            <span>Route: Contact</span>
+                            <span><a class="product-link" href="#contact">Talk to Team</a></span>
+                        </div>
+                    </article>
                 </div>
             </div>
         </section>
 
-        <!-- Developer Platform -->
-        <section class="section section-developer" id="developer">
-            <div class="container">
-                <div class="section-label">Developer Platform</div>
-                <h2 class="section-heading">Everything you need to build quantum</h2>
-                <p class="section-intro">A complete toolchain for developing, simulating, debugging, and deploying quantum algorithms — from visual design to hardware execution.</p>
-
-                <div class="dev-platform-grid">
-                    <div class="dev-card">
-                        <span class="dev-card-tag">Core IDE</span>
-                        <h3>Qaulium-Studio</h3>
-                        <p>A full-featured quantum IDE with Monaco editor, visual circuit builder with bi-directional code sync, and WASM-sandboxed local environments running entirely in your browser.</p>
-                        <ul class="dev-features">
-                            <li>Drag-and-drop circuit editor with real-time code sync</li>
-                            <li>Multi-SDK support: Qiskit, Cirq, PennyLane, Q#, OpenQASM</li>
-                            <li>Quantum-aware autocomplete, linting, and inline previews</li>
-                        </ul>
-                    </div>
-                    <div class="dev-card">
-                        <span class="dev-card-tag">Simulation & Digital Twins</span>
-                        <h3>vQPU Engine</h3>
-                        <p>Virtual quantum processor with state vector, density matrix, and tensor network backends. Test on live digital twins of IBM, IonQ, and Rigetti hardware — updated daily from real calibration data.</p>
-                        <ul class="dev-features">
-                            <li>Scalable simulation up to 40+ qubits</li>
-                            <li>12+ digital twins with 97%+ fidelity match</li>
-                            <li>Device advisor: best hardware recommendation per circuit</li>
-                        </ul>
-                    </div>
-                    <div class="dev-card">
-                        <span class="dev-card-tag">AI Co-Scientist</span>
-                        <h3>Quantum GPT</h3>
-                        <p>An AI assistant that generates circuits from natural language, optimizes gate counts, diagnoses errors, and converts research papers into runnable circuits — all context-aware within your project.</p>
-                        <ul class="dev-features">
-                            <li>Natural language to circuit generation with explanations</li>
-                            <li>Automated circuit optimization and code review</li>
-                            <li>Paper-to-circuit converter from arXiv links or PDFs</li>
-                        </ul>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- Research -->
-        <section class="section section-research" id="research">
-            <div class="container">
-                <div class="section-label">Research</div>
-                <h2 class="section-heading">Advancing quantum software</h2>
-                <p class="section-intro">Our research program spans quantum algorithms, AI-driven circuit optimization, and the development of next-generation quantum software tools.</p>
-
-                <div class="research-grid">
-                    <div class="research-card">
-                        <span class="research-number">01</span>
-                        <h3>AI-Driven Quantum Optimization</h3>
-                        <p>We develop AI models that understand quantum circuits structurally — enabling automated gate cancellation, noise-aware transpilation, and reinforcement-learning-based circuit optimization that outperforms hand-tuned heuristics.</p>
-                        <div class="research-topics">
-                            <span>Neural circuit optimization</span>
-                            <span>Barren plateau mitigation</span>
-                            <span>RL-based compilation</span>
-                        </div>
-                    </div>
-                    <div class="research-card">
-                        <span class="research-number">02</span>
-                        <h3>Quantum Error Correction Theory</h3>
-                        <p>Our QEC team investigates new stabilizer codes, decoder algorithms, and fault-tolerant circuit compilation techniques. We build interactive tools to visualize and experiment with error correction at every level.</p>
-                        <div class="research-topics">
-                            <span>Surface and color codes</span>
-                            <span>Decoder algorithms</span>
-                            <span>Fault-tolerant compilation</span>
-                        </div>
-                    </div>
-                    <div class="research-card">
-                        <span class="research-number">03</span>
-                        <h3>Quantum Machine Learning</h3>
-                        <p>We design hybrid quantum-classical learning architectures, from QNN builders and kernel methods to quantum reinforcement learning. Our research focuses on identifying practical quantum advantage in ML workloads.</p>
-                        <div class="research-topics">
-                            <span>Variational quantum classifiers</span>
-                            <span>Quantum kernel methods</span>
-                            <span>Expressibility analysis</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Use Cases -->
-        <section class="section section-usecases" id="usecases">
-            <div class="container">
-                <div class="section-label">Use Cases</div>
-                <h2 class="section-heading">Quantum advantage, applied</h2>
-                <p class="section-intro">Qaulium AI Studio unlocks new possibilities across industries where classical computing hits fundamental limits.</p>
-
-                <div class="usecases-grid">
-                    <div class="usecase-card">
-                        <div class="usecase-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-                            </svg>
-                        </div>
-                        <h3>Drug Discovery</h3>
-                        <p>Simulate molecular interactions at quantum fidelity to accelerate drug candidate screening and reduce preclinical timelines by orders of magnitude.</p>
-                    </div>
-                    <div class="usecase-card">
-                        <div class="usecase-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                            </svg>
-                        </div>
-                        <h3>Financial Modeling</h3>
-                        <p>Run Monte Carlo simulations and portfolio optimization at unprecedented speed, enabling real-time risk analysis across complex derivative portfolios.</p>
-                    </div>
-                    <div class="usecase-card">
-                        <div class="usecase-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                            </svg>
-                        </div>
-                        <h3>Climate Simulation</h3>
-                        <p>Model atmospheric and oceanic systems with quantum-enhanced resolution, improving long-range weather prediction and climate change analysis.</p>
-                    </div>
-                    <div class="usecase-card">
-                        <div class="usecase-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                            </svg>
-                        </div>
-                        <h3>Cryptography</h3>
-                        <p>Develop and test quantum-resistant encryption protocols, ensuring data security in the post-quantum era with native lattice-based algorithm support.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Software Capabilities -->
-        <section class="section section-capabilities">
-            <div class="container">
-                <div class="section-label">Software Capabilities</div>
-                <h2 class="section-heading">From concept to quantum advantage</h2>
-                <div class="capabilities-grid">
-                    <div class="capability-card">
-                        <div class="capability-number">01</div>
-                        <h4>Advanced Visualization</h4>
-                        <p>Animated Bloch spheres, density matrices, Wigner functions, and immersive 3D Hilbert space projections — all updating in real time.</p>
-                    </div>
-                    <div class="capability-card">
-                        <div class="capability-number">02</div>
-                        <h4>Quantum Error Correction</h4>
-                        <p>Interactive QEC playground with 25+ codes, visual stabilizer builder, decoder suite, and threshold computation with Monte Carlo analysis.</p>
-                    </div>
-                    <div class="capability-card">
-                        <div class="capability-number">03</div>
-                        <h4>Performance Profiler</h4>
-                        <p>Gate count analysis, depth profiling, estimated fidelity per device, bottleneck detection, and 10+ auto-optimization passes.</p>
-                    </div>
-                    <div class="capability-card">
-                        <div class="capability-number">04</div>
-                        <h4>Multi-Framework Transpilation</h4>
-                        <p>Instant lossless conversion between Qiskit, Cirq, PennyLane, Q#, OpenQASM, Quil, and Braket — any direction, any pair.</p>
-                    </div>
-                    <div class="capability-card">
-                        <div class="capability-number">05</div>
-                        <h4>Collaborative Research Lab</h4>
-                        <p>Real-time multiplayer circuit editing with live cursors, voice/video chat, peer review, and automated LaTeX paper generation.</p>
-                    </div>
-                    <div class="capability-card">
-                        <div class="capability-number">06</div>
-                        <h4>Quantum ML Workbench</h4>
-                        <p>Visual QNN builder, automated architecture search, training dashboard with barren plateau detection, and quantum kernel methods.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Contact -->
         <section class="section section-contact" id="contact">
             <div class="container">
                 <div class="section-label">Contact</div>
                 <div class="contact-grid">
                     <div class="contact-info">
-                        <h2>Work with us.</h2>
-                        <p>Whether you are exploring quantum computing for research or enterprise deployment, our team is ready to discuss your requirements.</p>
+                        <h2>Let us map your use case.</h2>
+                        <p>Share your project context and we will suggest the right entry point across software, hardware, and onboarding.</p>
                         <div class="contact-details">
                             <div class="contact-detail">
                                 <span class="contact-detail-label">General Inquiries</span>
@@ -393,16 +203,15 @@
             </div>
         </section>
 
-        <!-- Pre-Registration CTA -->
         <section class="section section-cta">
             <div class="container">
                 <div class="cta-banner">
                     <div class="cta-text">
-                        <h2>Secure your early access</h2>
-                        <p>Pre-register now to be first in line when Qaulium-Studio launches. Limited spots available.</p>
+                        <h2>Ready to get started?</h2>
+                        <p>Register once and we will guide you to the right product path.</p>
                     </div>
                     <div class="cta-actions">
-                        <a href="registration" class="btn btn-primary btn-light">Pre-Register Now <span class="btn-icon">&rarr;</span></a>
+                        <a href="#" class="btn btn-primary btn-light" id="ctaRegisterBtn">Get Early Access <span class="btn-icon">&rarr;</span></a>
                     </div>
                 </div>
             </div>
@@ -414,41 +223,24 @@
         <div class="container">
             <div class="footer-top">
                 <div class="footer-brand">
-                    <a href="#" class="nav-logo">
+                    <a href="#hero" class="nav-logo">
                         <img class="logo-mark" src="logo-white.png" alt="Qaulium AI" height="32">
                     </a>
                 </div>
                 <div class="footer-columns">
                     <div class="footer-column">
-                        <h4>Platform</h4>
+                        <h4>Products</h4>
                         <ul>
-                            <li><a href="#architecture">Qaulium AI Studio</a></li>
+                            <li><a href="#products">Overview</a></li>
                             <li><a href="hardware.html">Hardware</a></li>
-                            <li><a href="#">Documentation</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h4>Developer</h4>
-                        <ul>
-                            <li><a href="#developer">QauliumOS</a></li>
-                            <li><a href="#developer">Qaulium-Studio</a></li>
-                            <li><a href="#">Documentation</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h4>Research</h4>
-                        <ul>
-                            <li><a href="#research">Publications</a></li>
-                            <li><a href="#">Open Source</a></li>
-                            <li><a href="careers.html">Careers</a></li>
+                            <li><a href="registration.html">Pre-Registration</a></li>
                         </ul>
                     </div>
                     <div class="footer-column">
                         <h4>Company</h4>
                         <ul>
+                            <li><a href="careers.html">Careers</a></li>
                             <li><a href="#contact">Contact</a></li>
-                            <li><a href="#">Press</a></li>
-                            <li><a href="#">Partnerships</a></li>
                         </ul>
                     </div>
                 </div>

@@ -3,6 +3,8 @@
    ============================================ */
 
 const crypto = require('crypto');
+const { promisify } = require('util');
+const scryptAsync = promisify(crypto.scrypt);
 
 // Module-level variables that will be set by server.js
 let db = null;
@@ -10,14 +12,16 @@ let HAS_POSTGRES = false;
 let pgQuery = null;
 let transporter = null;
 let SMTP_FROM = null;
+let ensureSchema = null;
 
 // Function to initialize the password reset module with server dependencies
-function initializePasswordReset(serverDb, serverHasPostgres, serverPgQuery, serverTransporter, serverSmtpFrom) {
+function initializePasswordReset(serverDb, serverHasPostgres, serverPgQuery, serverTransporter, serverSmtpFrom, serverEnsureSchema) {
     db = serverDb;
     HAS_POSTGRES = serverHasPostgres;
     pgQuery = serverPgQuery;
     transporter = serverTransporter;
     SMTP_FROM = serverSmtpFrom;
+    ensureSchema = typeof serverEnsureSchema === 'function' ? serverEnsureSchema : null;
 }
 
 // Database table for password reset tokens
@@ -162,6 +166,18 @@ function generatePasswordResetToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
+async function ensurePostgresReady() {
+    if (HAS_POSTGRES && ensureSchema) {
+        await ensureSchema();
+    }
+}
+
+async function hashPassword(password) {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const derivedKey = await scryptAsync(String(password), salt, 64);
+    return `scrypt$${salt}$${derivedKey.toString('hex')}`;
+}
+
 // Helper to get expiry time (1 hour from now)
 function getPasswordResetExpiry() {
     const now = new Date();
@@ -214,7 +230,7 @@ const handlePasswordResetRequest = async (req, res) => {
 
         // Save token to database
         if (HAS_POSTGRES) {
-            await ensurePostgresSchema();
+            await ensurePostgresReady();
             // Delete any existing tokens for this email
             await pgQuery('DELETE FROM password_reset_tokens WHERE email = $1', [normalizedEmail]);
             // Insert new token
@@ -324,7 +340,7 @@ const handleVerifyToken = async (req, res) => {
 
         // Check token in database
         if (HAS_POSTGRES) {
-            await ensurePostgresSchema();
+            await ensurePostgresReady();
             const result = await pgQuery(
                 `SELECT email FROM password_reset_tokens WHERE token = $1 AND expires_at > NOW() LIMIT 1`,
                 [token]
@@ -398,7 +414,7 @@ const handlePasswordReset = async (req, res) => {
         // Verify token
         let email = null;
         if (HAS_POSTGRES) {
-            await ensurePostgresSchema();
+            await ensurePostgresReady();
             const result = await pgQuery(
                 `SELECT email FROM password_reset_tokens WHERE token = $1 AND expires_at > NOW() LIMIT 1`,
                 [token]
@@ -432,23 +448,23 @@ const handlePasswordReset = async (req, res) => {
             });
         }
 
-        // Update password in database
-        // Note: This assumes your users table has a password field
-        // If you're using Firebase Auth, you would need to update the password there instead
+        const passwordHash = await hashPassword(newPassword);
+
+        // Update password hash in database
+        // Note: This assumes your users table has a password field.
+        // If using external auth (e.g. Firebase Auth), update password there instead.
         if (HAS_POSTGRES) {
-            // Update user password (hash the password first in production)
             await pgQuery(
                 `UPDATE users SET password = $1, updated_at = NOW() WHERE email = $2`,
-                [newPassword, email]
+                [passwordHash, email]
             );
             
             // Delete the used token
             await pgQuery('DELETE FROM password_reset_tokens WHERE token = $1', [token]);
         } else if (db) {
-            // Update user password
             db.prepare(`
                 UPDATE users SET password = ?, updated_at = datetime('now') WHERE email = ?
-            `).run(newPassword, email);
+            `).run(passwordHash, email);
             
             // Delete the used token
             db.prepare('DELETE FROM password_reset_tokens WHERE token = ?').run(token);

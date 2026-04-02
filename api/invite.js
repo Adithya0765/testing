@@ -5,10 +5,6 @@ const nodemailer = require('nodemailer');
 // Sends an invitation email to a new employee with onboarding link
 
 module.exports = async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
     try {
@@ -24,7 +20,7 @@ module.exports = async (req, res) => {
         const onboardingUrl = `${baseUrl}/onboarding/?id=${inviteId}&token=${token}`;
 
         console.log(`[INVITE] Sending invite to ${email}`);
-        console.log(`[INVITE] Onboarding URL: ${onboardingUrl}`);
+        console.log(`[INVITE] Onboarding URL generated for invite ${inviteId}`);
 
         const SMTP_CONFIG = {
             host: process.env.SMTP_HOST || 'smtpout.secureserver.net',

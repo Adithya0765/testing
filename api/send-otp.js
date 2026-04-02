@@ -7,10 +7,6 @@ const nodemailer = require('nodemailer');
 const OTP_SECRET = process.env.OTP_SECRET || 'qualium-ai-secure-otp-fallback';
 
 module.exports = async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
     try {
@@ -29,8 +25,7 @@ module.exports = async (req, res) => {
         const hmac = crypto.createHmac('sha256', OTP_SECRET).update(payload).digest('hex');
         const otpHash = `${hmac}.${expiresAt}`;
 
-        // For now, log it (visible in Vercel function logs)
-        console.log(`[OTP] Code for ${email}: ${otp}`);
+        console.log(`[OTP] Verification code generated for ${email}`);
 
         const SMTP_CONFIG = {
             host: process.env.SMTP_HOST || 'smtpout.secureserver.net',
