@@ -4,7 +4,10 @@
 !index.html
 !registration.html
 !careers.html
+!careers-apply.html
 !hardware.html
+!forms.html
+!password-reset.html
 !styles.css
 !main.js
 !sitemap.xml
@@ -18,6 +21,7 @@
 !package-lock.json
 !server.js
 !api/
+!routes/
 !SEO_OPTIMIZATION_GUIDE.md
 !PRODUCTION_DEPLOYMENT.md
 !README.md

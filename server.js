@@ -11,6 +11,8 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const http = require('http');
+const { registerStaticPageRoutes } = require('./routes/static-pages');
+const { registerEmployeePortalRoutes } = require('./routes/employee-portal');
 
 let WebSocketServer = null;
 try { ({ WebSocketServer } = require('ws')); } catch (e) { WebSocketServer = null; }
@@ -37,6 +39,23 @@ const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || '';
 const ADMIN_OTP_TTL_MS = parseInt(process.env.ADMIN_OTP_TTL_MS || '300000', 10); // 5 min
 const ADMIN_OTP_EMAIL = (process.env.ADMIN_OTP_EMAIL || ADMIN_LOGIN_EMAIL).trim().toLowerCase();
 const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'qaulium-default-org';
+
+function validateProductionEnv() {
+    if (!IS_PRODUCTION_RUNTIME) return;
+
+    const required = ['ADMIN_TOKEN_SECRET', 'ADMIN_LOGIN_PASSWORD', 'OTP_SECRET'];
+    const missing = required.filter((key) => !String(process.env[key] || '').trim());
+
+    if (missing.length) {
+        throw new Error('Missing required production environment variables: ' + missing.join(', '));
+    }
+
+    if (process.env.ADMIN_DEV_OTP_BYPASS === '1' || process.env.ADMIN_DEV_AUTH_BYPASS === '1') {
+        throw new Error('Development admin bypass flags cannot be enabled in production runtime.');
+    }
+}
+
+validateProductionEnv();
 
 const pendingAdminOtps = new Map();
 const adminWsClients = new Set();
@@ -340,37 +359,7 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 // Explicit careers route for environments where extension fallback is skipped
-app.get('/careers', (req, res) => {
-    res.sendFile(path.join(__dirname, 'careers.html'));
-});
-
-app.get('/careers.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'careers.html'));
-});
-
-app.get('/careers/apply', (req, res) => {
-    res.sendFile(path.join(__dirname, 'careers-apply.html'));
-});
-
-app.get('/careers-apply.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'careers-apply.html'));
-});
-
-app.get('/registration', (req, res) => {
-    res.sendFile(path.join(__dirname, 'registration.html'));
-});
-
-app.get('/registration.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'registration.html'));
-});
-
-app.get('/pre-register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'registration.html'));
-});
-
-app.get('/pre-registration', (req, res) => {
-    res.sendFile(path.join(__dirname, 'registration.html'));
-});
+registerStaticPageRoutes(app, __dirname);
 
 function normalizeAllowedOrigin(rawValue) {
     const value = String(rawValue || '').trim();
@@ -3620,11 +3609,6 @@ app.post('/api/forms/:slug/submit', async (req, res) => {
     }
 });
 
-// --- Serve public form page ---
-app.get('/forms/:slug', (req, res) => {
-    res.sendFile(path.join(__dirname, 'forms.html'));
-});
-
 app.post('/api/admin/email/send', requireAdminAuth, async (req, res) => {
     try {
         const { audience, subject, body, customEmails } = req.body || {};
@@ -3640,7 +3624,7 @@ app.post('/api/admin/email/send', requireAdminAuth, async (req, res) => {
             return res.status(400).json({ success: false, message: 'No recipients found for selected audience.' });
         }
 
-        const htmlBody = String(body || '').replace(/cid:qualium-logo/g, 'https://qauliumai.in/logo-white.png');
+        const htmlBody = String(body || '').replace(/cid:(?:qaulium|qualium)-logo/g, 'https://qauliumai.in/logo-white.png');
 
         const usageEventId = buildUsageEventId('bulk_email');
         const emailCreditCost = estimateCreditCost({
@@ -3850,11 +3834,7 @@ app.get('/api/careers', requireAdminAuth, async (req, res) => {
 
 // --- Employee Portal API Routes ---
 try {
-    app.post('/api/send-otp', require('./api/send-otp.js'));
-    app.post('/api/verify-otp', require('./api/verify-otp.js'));
-    app.post('/api/setup-totp', require('./api/setup-totp.js'));
-    app.post('/api/verify-totp', require('./api/verify-totp.js'));
-    app.post('/api/invite', requireAdminAuth, require('./api/invite.js'));
+    registerEmployeePortalRoutes(app, requireAdminAuth);
 } catch (err) {
     console.error('Employee portal API routes initialization failed:', err.message);
 }
@@ -3863,9 +3843,6 @@ try {
 app.post('/api/password-reset/request', passwordResetModule.handlePasswordResetRequest);
 app.post('/api/password-reset/verify-token', passwordResetModule.handleVerifyToken);
 app.post('/api/password-reset/reset', passwordResetModule.handlePasswordReset);
-app.get('/password-reset', (req, res) => {
-    res.sendFile(path.join(__dirname, 'password-reset.html'));
-});
 
 // --- Start Server (skip on Vercel) ---
 if (!process.env.VERCEL) {

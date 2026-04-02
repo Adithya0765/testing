@@ -7,12 +7,12 @@
 
     // --- Theme toggle ---
     var themeToggle = document.getElementById('themeToggle');
-    var savedTheme = localStorage.getItem('qualium-theme');
+    var savedTheme = localStorage.getItem('qaulium-theme');
     var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     function setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('qualium-theme', theme);
+        localStorage.setItem('qaulium-theme', theme);
     }
 
     if (savedTheme) {
@@ -29,7 +29,7 @@
     }
 
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-        if (!localStorage.getItem('qualium-theme')) {
+        if (!localStorage.getItem('qaulium-theme')) {
             setTheme(e.matches ? 'dark' : 'light');
         }
     });

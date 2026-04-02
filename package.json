@@ -1,5 +1,5 @@
 {
-  "name": "qualium-ai-landing",
+  "name": "qaulium-ai-landing",
   "version": "1.0.0",
   "description": "Qaulium AI Landing Page with Backend APIs",
   "main": "server.js",
@@ -9,7 +9,6 @@
     "build": "echo 'Build complete'"
   },
   "dependencies": {
-    "@vercel/postgres": "^0.10.0",
     "better-sqlite3": "^11.0.0",
     "dotenv": "^17.3.1",
     "express": "^4.21.0",

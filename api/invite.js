@@ -119,7 +119,7 @@ Amaravati, Andhra Pradesh, India
             await transporter.sendMail({
                 from: SMTP_FROM,
                 to: email,
-                subject: 'You\'re Invited to Qualium AI!',
+                subject: 'You\'re Invited to Qaulium AI!',
                 html: htmlTemplate
             });
             console.log(`[INVITE] Email sent via SMTP to ${email}`);

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Form — Qaulium AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<style>
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --text: #0b0b0b;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --border: #e5e7eb;
+  --err: #dc2626;
+  --ok: #16a34a;
+  --font: 'IBM Plex Sans','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+[data-theme="dark"] {
+  --bg: #0A0A0A;
+  --surface: #141414;
+  --text: #f5f5f5;
+  --muted: #9ca3af;
+  --accent: #60a5fa;
+  --accent-hover: #3b82f6;
+  --border: #262626;
+  --err: #f87171;
+  --ok: #4ade80;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);color:var(--text);background:var(--bg);line-height:1.6;min-height:100vh}
+
+.form-shell{max-width:680px;margin:0 auto;padding:24px 16px 80px}
+.form-header{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px 28px;margin-bottom:16px;border-top:4px solid var(--accent)}
+.form-header h1{font-family:'Inter',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.03em;margin-bottom:6px}
+.form-header p{color:var(--muted);font-size:15px}
+.form-brand{display:flex;align-items:center;gap:8px;margin-bottom:18px;font-size:12px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase}
+.form-brand img{height:22px;filter:brightness(0)}
+[data-theme="dark"] .form-brand img{filter:brightness(1)}
+
+.form-theme-toggle{position:fixed;top:16px;right:16px;z-index:50;width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,border-color .2s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.form-theme-toggle:hover{border-color:var(--accent)}
+.form-theme-toggle .icon-sun{display:block}
+.form-theme-toggle .icon-moon{display:none}
+[data-theme="dark"] .form-theme-toggle .icon-sun{display:none}
+[data-theme="dark"] .form-theme-toggle .icon-moon{display:block}
+
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:16px}
+.form-section h2{font-family:'Inter',sans-serif;font-size:18px;font-weight:600;margin-bottom:4px}
+.form-section .section-desc{color:var(--muted);font-size:14px;margin-bottom:18px}
+
+.form-field{margin-bottom:22px}
+.form-field:last-child{margin-bottom:0}
+.form-field label{display:block;font-size:14px;font-weight:500;margin-bottom:6px}
+.form-field .required-star{color:var(--err);margin-left:2px}
+
+.form-field input[type="text"],
+.form-field input[type="email"],
+.form-field input[type="number"],
+.form-field input[type="date"],
+.form-field input[type="url"],
+.form-field input[type="tel"],
+.form-field select,
+.form-field textarea{
+  width:100%;padding:10px 14px;font-size:15px;font-family:var(--font);border:1px solid var(--border);
+  border-radius:8px;background:var(--bg);color:var(--text);transition:border-color .2s;outline:none;
+}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--accent)}
+.form-field textarea{resize:vertical;min-height:80px}
+
+.form-field .option-group{display:flex;flex-direction:column;gap:8px}
+.form-field .option-item{display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer}
+.form-field .option-item input{accent-color:var(--accent);width:18px;height:18px;cursor:pointer}
+
+.form-field .field-error{color:var(--err);font-size:13px;margin-top:4px;display:none}
+
+.form-actions{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 28px;display:flex;justify-content:space-between;align-items:center}
+.form-actions button{
+  padding:10px 32px;font-size:15px;font-weight:600;font-family:var(--font);border:none;border-radius:8px;
+  cursor:pointer;background:var(--accent);color:#fff;transition:background .2s;
+}
+.form-actions button:hover{background:var(--accent-hover)}
+.form-actions button:disabled{opacity:.5;cursor:not-allowed}
+.form-actions .clear-btn{background:transparent;color:var(--muted);padding:10px 16px;font-weight:500}
+.form-actions .clear-btn:hover{color:var(--text);background:rgba(0,0,0,.04)}
+
+.form-status{text-align:center;padding:8px 0;font-size:14px;color:var(--err)}
+.form-status.ok{color:var(--ok)}
+
+.form-success{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:60px 28px;text-align:center}
+.form-success .check{width:64px;height:64px;border-radius:50%;background:var(--ok);display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px}
+.form-success .check svg{width:32px;height:32px;stroke:#fff;fill:none;stroke-width:3}
+.form-success h2{font-family:'Inter',sans-serif;font-size:24px;font-weight:700;margin-bottom:8px}
+.form-success p{color:var(--muted);font-size:15px;margin-bottom:24px}
+.form-success a{color:var(--accent);font-weight:500;text-decoration:none}
+
+.form-loading,.form-error-page{text-align:center;padding:100px 20px;color:var(--muted);font-size:16px}
+.form-error-page h2{color:var(--text);margin-bottom:8px;font-family:'Inter',sans-serif}
+
+.form-closed{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:60px 28px;text-align:center}
+.form-closed h2{font-family:'Inter',sans-serif;font-size:22px;margin-bottom:8px}
+.form-closed p{color:var(--muted)}
+</style>
+</head>
+<body>
+<button class="form-theme-toggle" id="formThemeToggle" aria-label="Toggle theme">
+  <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+  <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+</button>
+<div class="form-shell" id="formShell">
+  <div class="form-loading" id="formLoading">Loading form...</div>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  // Theme - sync with landing page
+  var savedTheme = localStorage.getItem('qaulium-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  document.getElementById('formThemeToggle').addEventListener('click', function() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('qaulium-theme', next);
+  });
+
+  const shell = document.getElementById('formShell');
+  const slug = window.location.pathname.split('/forms/')[1] || '';
+
+  if (!slug) {
+    shell.innerHTML = '<div class="form-error-page"><h2>Invalid URL</h2><p>No form specified.</p></div>';
+    return;
+  }
+
+  fetch('/api/forms/' + encodeURIComponent(slug))
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) {
+        if (data.message && data.message.includes('no longer accepting')) {
+          shell.innerHTML = '<div class="form-closed"><h2>Form Closed</h2><p>' + escapeHtml(data.message) + '</p></div>';
+        } else {
+          shell.innerHTML = '<div class="form-error-page"><h2>Form Not Found</h2><p>This form does not exist or has been removed.</p></div>';
+        }
+        return;
+      }
+      renderForm(data.form);
+    })
+    .catch(() => {
+      shell.innerHTML = '<div class="form-error-page"><h2>Error</h2><p>Could not load the form. Please try again later.</p></div>';
+    });
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function isGenericQuestionLabel(value) {
+    return /^question\s*\d+$/i.test(String(value || '').trim());
+  }
+
+  function toTitleCase(value) {
+    const cleaned = String(value || '')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!cleaned) return '';
+    return cleaned.replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+  }
+
+  function getDisplayFieldLabel(field, section, fieldIndex) {
+    const raw = String(field && field.label || '').trim();
+    if (raw && !/^f_[a-z0-9]+$/i.test(raw) && !isGenericQuestionLabel(raw)) {
+      return raw;
+    }
+
+    const sectionTitle = String(section && section.title || '').trim();
+    const sectionFieldCount = Array.isArray(section && section.fields) ? section.fields.length : 0;
+    if (sectionTitle) {
+      if (sectionFieldCount <= 1) return sectionTitle;
+      return sectionTitle + ' - Item ' + (fieldIndex + 1);
+    }
+
+    const fromId = toTitleCase(field && field.id);
+    if (fromId && !/^F [A-Za-z0-9]+$/i.test(fromId)) return fromId;
+
+    return toTitleCase(field && field.type) || 'Field';
+  }
+
+  function renderForm(form) {
+    document.title = form.title + ' — Qaulium AI';
+
+    let html = '';
+
+    // Header
+    html += '<div class="form-header">';
+    html += '<div class="form-brand"><img src="/logo-white.png" alt="Qaulium AI" height="22"> Qaulium AI Forms</div>';
+    html += '<h1>' + escapeHtml(form.title) + '</h1>';
+    if (form.description) html += '<p>' + escapeHtml(form.description) + '</p>';
+    html += '</div>';
+
+    // Sections
+    const sections = form.sections || [];
+    html += '<form id="publicForm" novalidate>';
+    for (const section of sections) {
+      html += '<div class="form-section">';
+      if (section.title) html += '<h2>' + escapeHtml(section.title) + '</h2>';
+      if (section.description) html += '<div class="section-desc">' + escapeHtml(section.description) + '</div>';
+
+      (section.fields || []).forEach(function(field, fieldIndex) {
+        html += renderField(field, section, fieldIndex);
+      });
+      html += '</div>';
+    }
+
+    // Actions
+    html += '<div class="form-actions">';
+    html += '<button type="button" class="clear-btn" onclick="this.form.reset()">Clear form</button>';
+    html += '<button type="submit" id="submitBtn">Submit</button>';
+    html += '</div>';
+    html += '<div class="form-status" id="formStatus"></div>';
+    html += '</form>';
+
+    shell.innerHTML = html;
+
+    // attach submit
+    document.getElementById('publicForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      submitForm(form, sections);
+    });
+  }
+
+  function renderField(field, section, fieldIndex) {
+    const displayLabel = getDisplayFieldLabel(field, section, fieldIndex);
+    let h = '<div class="form-field" data-field-id="' + field.id + '">';
+    h += '<label>' + escapeHtml(displayLabel);
+    if (field.required) h += '<span class="required-star">*</span>';
+    h += '</label>';
+
+    const ph = field.placeholder ? ' placeholder="' + escapeHtml(field.placeholder) + '"' : '';
+    const req = field.required ? ' required' : '';
+
+    switch (field.type) {
+      case 'text':
+        h += '<input type="text" name="' + field.id + '"' + ph + req + '>';
+        break;
+      case 'email':
+        h += '<input type="email" name="' + field.id + '"' + ph + req + '>';
+        break;
+      case 'number':
+        h += '<input type="number" name="' + field.id + '"' + ph + req + '>';
+        break;
+      case 'date':
+        h += '<input type="date" name="' + field.id + '"' + req + '>';
+        break;
+      case 'url':
+        h += '<input type="url" name="' + field.id + '"' + ph + req + '>';
+        break;
+      case 'phone':
+        h += '<input type="tel" name="' + field.id + '"' + ph + req + '>';
+        break;
+      case 'paragraph':
+        h += '<textarea name="' + field.id + '"' + ph + req + ' rows="4"></textarea>';
+        break;
+      case 'dropdown':
+        h += '<select name="' + field.id + '"' + req + '>';
+        h += '<option value="">Select...</option>';
+        for (const opt of (field.options || [])) {
+          h += '<option value="' + escapeHtml(opt) + '">' + escapeHtml(opt) + '</option>';
+        }
+        h += '</select>';
+        break;
+      case 'multiple_choice':
+        h += '<div class="option-group">';
+        for (const opt of (field.options || [])) {
+          h += '<label class="option-item"><input type="radio" name="' + field.id + '" value="' + escapeHtml(opt) + '"' + req + '> ' + escapeHtml(opt) + '</label>';
+        }
+        h += '</div>';
+        break;
+      case 'checkbox':
+        h += '<div class="option-group">';
+        for (const opt of (field.options || [])) {
+          h += '<label class="option-item"><input type="checkbox" name="' + field.id + '" value="' + escapeHtml(opt) + '"> ' + escapeHtml(opt) + '</label>';
+        }
+        h += '</div>';
+        break;
+      default:
+        h += '<input type="text" name="' + field.id + '"' + ph + req + '>';
+    }
+
+    h += '<div class="field-error"></div>';
+    h += '</div>';
+    return h;
+  }
+
+  function collectResponses(sections) {
+    const data = {};
+    let emailField = '';
+    for (const section of sections) {
+      for (const field of (section.fields || [])) {
+        if (field.type === 'checkbox') {
+          const checked = document.querySelectorAll('input[name="' + field.id + '"]:checked');
+          data[field.id] = Array.from(checked).map(c => c.value);
+        } else if (field.type === 'multiple_choice') {
+          const sel = document.querySelector('input[name="' + field.id + '"]:checked');
+          data[field.id] = sel ? sel.value : '';
+        } else {
+          const el = document.querySelector('[name="' + field.id + '"]');
+          data[field.id] = el ? el.value : '';
+        }
+        if (field.type === 'email' && data[field.id]) emailField = data[field.id];
+      }
+    }
+    return { responses: data, email: emailField };
+  }
+
+  function submitForm(form, sections) {
+    const status = document.getElementById('formStatus');
+    const btn = document.getElementById('submitBtn');
+    status.textContent = '';
+    status.className = 'form-status';
+
+    const payload = collectResponses(sections);
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    fetch('/api/forms/' + encodeURIComponent(form.slug) + '/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        shell.innerHTML = '<div class="form-success">' +
+          '<div class="check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>' +
+          '<h2>Response Submitted</h2>' +
+          '<p>Your response has been recorded successfully.</p>' +
+          '<a href="/forms/' + escapeHtml(form.slug) + '">Submit another response</a>' +
+          '</div>';
+      } else {
+        status.textContent = data.message || 'Submission failed.';
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      }
+    })
+    .catch(() => {
+      status.textContent = 'Network error. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Submit';
+    });
+  }
+})();
+</script>
+</body>
+</html>

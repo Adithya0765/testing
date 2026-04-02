@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
         const secret = base32Encode(secretBytes);
 
         // Build otpauth URL for QR code
-        const issuer = 'QualiumAI';
+        const issuer = 'QauliumAI';
         const label = encodeURIComponent(`${issuer}:${email}`);
         const otpauthUrl = `otpauth://totp/${label}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 

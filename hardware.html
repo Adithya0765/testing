@@ -297,7 +297,7 @@
         (function() {
             const toggle = document.getElementById('themeToggle');
             const html = document.documentElement;
-            const saved = localStorage.getItem('qualium-theme');
+            const saved = localStorage.getItem('qaulium-theme');
             html.setAttribute('data-theme', saved || 'light');
 
             if (toggle) {
@@ -305,7 +305,7 @@
                     const current = html.getAttribute('data-theme');
                     const next = current === 'dark' ? 'light' : 'dark';
                     html.setAttribute('data-theme', next);
-                    localStorage.setItem('qualium-theme', next);
+                    localStorage.setItem('qaulium-theme', next);
                 });
             }
 

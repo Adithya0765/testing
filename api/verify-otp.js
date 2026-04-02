@@ -4,10 +4,14 @@
 
 const crypto = require('crypto');
 
-const OTP_SECRET = process.env.OTP_SECRET || 'qualium-ai-secure-otp-fallback';
+const OTP_SECRET = String(process.env.OTP_SECRET || '').trim();
 
 module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
+
+    if (!OTP_SECRET) {
+        return res.status(503).json({ success: false, message: 'OTP service is not configured.' });
+    }
 
     try {
         const { email, code, otpHash } = req.body;
