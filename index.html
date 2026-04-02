@@ -393,40 +393,143 @@
                 
                 <div class="capabilities-scroll-container" id="capabilitiesScroll">
                     <div class="capabilities-horizontal">
-                        <article class="capability-card">
-                            <div class="capability-number">01</div>
-                            <h3>Advanced Visualization</h3>
-                            <p>Animated Bloch spheres, density matrices, Wigner functions, and immersive 3D Hilbert space projections — all updating in real time.</p>
+                        <article class="capability-card-horizontal">
+                            <div class="capability-card-image">
+                                <svg class="capability-illustration" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Bloch Sphere Visualization -->
+                                    <circle cx="300" cy="150" r="100" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+                                    <ellipse cx="300" cy="150" rx="100" ry="30" fill="none" stroke="#D1D5DB" stroke-width="1.5" stroke-dasharray="4 4"/>
+                                    <line x1="300" y1="50" x2="300" y2="250" stroke="#9CA3AF" stroke-width="1.5"/>
+                                    <line x1="200" y1="150" x2="400" y2="150" stroke="#9CA3AF" stroke-width="1.5"/>
+                                    <line x1="300" y1="150" x2="350" y2="100" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/>
+                                    <circle cx="350" cy="100" r="8" fill="#3B82F6"/>
+                                    <path d="M 250 180 Q 280 200 310 180" stroke="#10B981" stroke-width="2" fill="none"/>
+                                    <circle cx="300" cy="50" r="5" fill="#6B7280"/>
+                                    <circle cx="300" cy="250" r="5" fill="#6B7280"/>
+                                </svg>
+                            </div>
+                            <div class="capability-card-content">
+                                <div class="capability-number">01</div>
+                                <h3>Advanced Visualization</h3>
+                                <p>Animated Bloch spheres, density matrices, Wigner functions, and immersive 3D Hilbert space projections — all updating in real time.</p>
+                            </div>
                         </article>
 
-                        <article class="capability-card">
-                            <div class="capability-number">02</div>
-                            <h3>Quantum Error Correction</h3>
-                            <p>Interactive QEC playground with 25+ codes, visual stabilizer builder, decoder suite, and threshold computation with Monte Carlo analysis.</p>
+                        <article class="capability-card-horizontal">
+                            <div class="capability-card-image">
+                                <svg class="capability-illustration" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- QEC Grid -->
+                                    <rect x="100" y="80" width="400" height="140" rx="8" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+                                    <line x1="100" y1="150" x2="500" y2="150" stroke="#E5E7EB" stroke-width="1.5"/>
+                                    <line x1="250" y1="80" x2="250" y2="220" stroke="#E5E7EB" stroke-width="1.5"/>
+                                    <line x1="350" y1="80" x2="350" y2="220" stroke="#E5E7EB" stroke-width="1.5"/>
+                                    <circle cx="175" cy="115" r="15" fill="#10B981" opacity="0.3"/>
+                                    <circle cx="300" cy="115" r="15" fill="#3B82F6" opacity="0.3"/>
+                                    <circle cx="425" cy="115" r="15" fill="#EF4444" opacity="0.3"/>
+                                    <circle cx="175" cy="185" r="15" fill="#3B82F6" opacity="0.3"/>
+                                    <circle cx="300" cy="185" r="15" fill="#10B981" opacity="0.3"/>
+                                    <circle cx="425" cy="185" r="15" fill="#F59E0B" opacity="0.3"/>
+                                </svg>
+                            </div>
+                            <div class="capability-card-content">
+                                <div class="capability-number">02</div>
+                                <h3>Quantum Error Correction</h3>
+                                <p>Interactive QEC playground with 25+ codes, visual stabilizer builder, decoder suite, and threshold computation with Monte Carlo analysis.</p>
+                            </div>
                         </article>
 
-                        <article class="capability-card">
-                            <div class="capability-number">03</div>
-                            <h3>Performance Profiler</h3>
-                            <p>Gate count analysis, depth profiling, estimated fidelity per device, bottleneck detection, and 10+ auto-optimization passes.</p>
+                        <article class="capability-card-horizontal">
+                            <div class="capability-card-image">
+                                <svg class="capability-illustration" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Performance Chart -->
+                                    <rect x="80" y="60" width="440" height="180" rx="8" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+                                    <line x1="100" y1="220" x2="500" y2="220" stroke="#9CA3AF" stroke-width="1.5"/>
+                                    <line x1="100" y1="80" x2="100" y2="220" stroke="#9CA3AF" stroke-width="1.5"/>
+                                    <polyline points="120,200 180,160 240,180 300,120 360,140 420,100 480,110" stroke="#3B82F6" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="120" cy="200" r="5" fill="#3B82F6"/>
+                                    <circle cx="240" cy="180" r="5" fill="#3B82F6"/>
+                                    <circle cx="360" cy="140" r="5" fill="#3B82F6"/>
+                                    <circle cx="480" cy="110" r="5" fill="#3B82F6"/>
+                                </svg>
+                            </div>
+                            <div class="capability-card-content">
+                                <div class="capability-number">03</div>
+                                <h3>Performance Profiler</h3>
+                                <p>Gate count analysis, depth profiling, estimated fidelity per device, bottleneck detection, and 10+ auto-optimization passes.</p>
+                            </div>
                         </article>
 
-                        <article class="capability-card">
-                            <div class="capability-number">04</div>
-                            <h3>Multi-Framework Transpilation</h3>
-                            <p>Instant lossless conversion between Qiskit, Cirq, PennyLane, Q#, OpenQASM, Quil, and Braket — any direction, any pair.</p>
+                        <article class="capability-card-horizontal">
+                            <div class="capability-card-image">
+                                <svg class="capability-illustration" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Framework Icons -->
+                                    <rect x="80" y="100" width="100" height="100" rx="12" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+                                    <rect x="250" y="100" width="100" height="100" rx="12" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+                                    <rect x="420" y="100" width="100" height="100" rx="12" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+                                    <circle cx="130" cy="150" r="25" fill="#3B82F6" opacity="0.2"/>
+                                    <circle cx="300" cy="150" r="25" fill="#10B981" opacity="0.2"/>
+                                    <circle cx="470" cy="150" r="25" fill="#F59E0B" opacity="0.2"/>
+                                    <path d="M 190 150 L 240 150" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="4 4"/>
+                                    <path d="M 360 150 L 410 150" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="4 4"/>
+                                    <polygon points="235,145 245,150 235,155" fill="#9CA3AF"/>
+                                    <polygon points="405,145 415,150 405,155" fill="#9CA3AF"/>
+                                </svg>
+                            </div>
+                            <div class="capability-card-content">
+                                <div class="capability-number">04</div>
+                                <h3>Multi-Framework Transpilation</h3>
+                                <p>Instant lossless conversion between Qiskit, Cirq, PennyLane, Q#, OpenQASM, Quil, and Braket — any direction, any pair.</p>
+                            </div>
                         </article>
 
-                        <article class="capability-card">
-                            <div class="capability-number">05</div>
-                            <h3>Collaborative Research Lab</h3>
-                            <p>Real-time multiplayer circuit editing with live cursors, voice/video chat, peer review, and automated LaTeX paper generation.</p>
+                        <article class="capability-card-horizontal">
+                            <div class="capability-card-image">
+                                <svg class="capability-illustration" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Collaboration -->
+                                    <rect x="100" y="80" width="180" height="140" rx="8" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+                                    <rect x="320" y="80" width="180" height="140" rx="8" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="2"/>
+                                    <circle cx="150" cy="120" r="20" fill="#3B82F6" opacity="0.2"/>
+                                    <circle cx="230" cy="120" r="20" fill="#10B981" opacity="0.2"/>
+                                    <circle cx="370" cy="120" r="20" fill="#F59E0B" opacity="0.2"/>
+                                    <circle cx="450" cy="120" r="20" fill="#EF4444" opacity="0.2"/>
+                                    <line x1="120" y1="160" x2="260" y2="160" stroke="#E5E7EB" stroke-width="2"/>
+                                    <line x1="120" y1="180" x2="240" y2="180" stroke="#E5E7EB" stroke-width="2"/>
+                                    <line x1="340" y1="160" x2="480" y2="160" stroke="#E5E7EB" stroke-width="2"/>
+                                    <line x1="340" y1="180" x2="460" y2="180" stroke="#E5E7EB" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div class="capability-card-content">
+                                <div class="capability-number">05</div>
+                                <h3>Collaborative Research Lab</h3>
+                                <p>Real-time multiplayer circuit editing with live cursors, voice/video chat, peer review, and automated LaTeX paper generation.</p>
+                            </div>
                         </article>
 
-                        <article class="capability-card">
-                            <div class="capability-number">06</div>
-                            <h3>Quantum ML Workbench</h3>
-                            <p>Visual QNN builder, automated architecture search, training dashboard with barren plateau detection, and quantum kernel methods.</p>
+                        <article class="capability-card-horizontal">
+                            <div class="capability-card-image">
+                                <svg class="capability-illustration" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Neural Network -->
+                                    <circle cx="150" cy="100" r="15" fill="#3B82F6" opacity="0.3"/>
+                                    <circle cx="150" cy="150" r="15" fill="#3B82F6" opacity="0.3"/>
+                                    <circle cx="150" cy="200" r="15" fill="#3B82F6" opacity="0.3"/>
+                                    <circle cx="300" cy="80" r="15" fill="#10B981" opacity="0.3"/>
+                                    <circle cx="300" cy="130" r="15" fill="#10B981" opacity="0.3"/>
+                                    <circle cx="300" cy="180" r="15" fill="#10B981" opacity="0.3"/>
+                                    <circle cx="300" cy="220" r="15" fill="#10B981" opacity="0.3"/>
+                                    <circle cx="450" cy="120" r="15" fill="#F59E0B" opacity="0.3"/>
+                                    <circle cx="450" cy="180" r="15" fill="#F59E0B" opacity="0.3"/>
+                                    <line x1="165" y1="100" x2="285" y2="80" stroke="#9CA3AF" stroke-width="1"/>
+                                    <line x1="165" y1="150" x2="285" y2="130" stroke="#9CA3AF" stroke-width="1"/>
+                                    <line x1="165" y1="200" x2="285" y2="220" stroke="#9CA3AF" stroke-width="1"/>
+                                    <line x1="315" y1="80" x2="435" y2="120" stroke="#9CA3AF" stroke-width="1"/>
+                                    <line x1="315" y1="180" x2="435" y2="180" stroke="#9CA3AF" stroke-width="1"/>
+                                </svg>
+                            </div>
+                            <div class="capability-card-content">
+                                <div class="capability-number">06</div>
+                                <h3>Quantum ML Workbench</h3>
+                                <p>Visual QNN builder, automated architecture search, training dashboard with barren plateau detection, and quantum kernel methods.</p>
+                            </div>
                         </article>
                     </div>
                 </div>

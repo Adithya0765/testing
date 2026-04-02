@@ -757,53 +757,71 @@
         var capabilitiesScroll = document.getElementById('capabilitiesScroll');
         if (!capabilitiesScroll) return;
 
-        var isScrolling = false;
-        var scrollTimeout;
+        var section = document.querySelector('.section-capabilities');
+        var isInSection = false;
+        var sectionTop = 0;
+        var sectionHeight = 0;
+        var maxHorizontalScroll = 0;
 
-        function handleWheel(e) {
-            var container = capabilitiesScroll;
-            var scrollLeft = container.scrollLeft;
-            var scrollWidth = container.scrollWidth;
-            var clientWidth = container.clientWidth;
-            var maxScroll = scrollWidth - clientWidth;
-
-            // Check if we're at the end of horizontal scroll
-            var atEnd = scrollLeft >= maxScroll - 5;
-            var atStart = scrollLeft <= 5;
-
-            // If scrolling down and at the end, allow page scroll
-            if (e.deltaY > 0 && atEnd) {
-                return; // Let the page scroll naturally
-            }
-
-            // If scrolling up and at the start, allow page scroll
-            if (e.deltaY < 0 && atStart) {
-                return; // Let the page scroll naturally
-            }
-
-            // Otherwise, hijack scroll for horizontal movement
-            e.preventDefault();
-            container.scrollLeft += e.deltaY;
-            isScrolling = true;
-
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(function () {
-                isScrolling = false;
-            }, 150);
+        function updateSectionMetrics() {
+            if (!section) return;
+            var rect = section.getBoundingClientRect();
+            sectionTop = window.scrollY + rect.top;
+            sectionHeight = rect.height;
+            maxHorizontalScroll = capabilitiesScroll.scrollWidth - capabilitiesScroll.clientWidth;
         }
 
-        // Only enable horizontal scroll when the section is in view
-        var observer = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    capabilitiesScroll.addEventListener('wheel', handleWheel, { passive: false });
-                } else {
-                    capabilitiesScroll.removeEventListener('wheel', handleWheel);
-                }
-            });
-        }, {
-            threshold: 0.3
-        });
+        function handleScroll() {
+            var scrollY = window.scrollY;
+            var viewportHeight = window.innerHeight;
+            
+            // Check if we're in the capabilities section
+            var inSection = scrollY >= sectionTop - viewportHeight * 0.3 && 
+                           scrollY <= sectionTop + sectionHeight;
 
-        observer.observe(capabilitiesScroll);
+            if (inSection && !isInSection) {
+                // Entering section
+                isInSection = true;
+                updateSectionMetrics();
+            } else if (!inSection && isInSection) {
+                // Leaving section
+                isInSection = false;
+                capabilitiesScroll.scrollLeft = 0;
+            }
+
+            if (isInSection) {
+                // Calculate horizontal scroll position based on vertical scroll
+                var sectionProgress = (scrollY - sectionTop + viewportHeight * 0.3) / (sectionHeight + viewportHeight * 0.6);
+                sectionProgress = Math.max(0, Math.min(1, sectionProgress));
+                
+                var targetScrollLeft = sectionProgress * maxHorizontalScroll;
+                capabilitiesScroll.scrollLeft = targetScrollLeft;
+            }
+        }
+
+        // Also handle wheel events for direct horizontal scrolling
+        function handleWheel(e) {
+            if (!isInSection) return;
+            
+            var scrollLeft = capabilitiesScroll.scrollLeft;
+            var atEnd = scrollLeft >= maxHorizontalScroll - 5;
+            var atStart = scrollLeft <= 5;
+
+            // If at end and scrolling down, or at start and scrolling up, allow page scroll
+            if ((e.deltaY > 0 && atEnd) || (e.deltaY < 0 && atStart)) {
+                return;
+            }
+
+            // Otherwise, hijack for horizontal scroll
+            e.preventDefault();
+            capabilitiesScroll.scrollLeft += e.deltaY;
+        }
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', updateSectionMetrics, { passive: true });
+        capabilitiesScroll.addEventListener('wheel', handleWheel, { passive: false });
+
+        // Initial setup
+        updateSectionMetrics();
+        handleScroll();
     })();
