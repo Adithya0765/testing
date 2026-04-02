@@ -4013,6 +4013,46 @@ app.get('/research', (req, res) => {
     res.redirect('/#products');
 });
 
+// Docs page route (placeholder for future implementation)
+app.get('/docs', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    // TODO: Create docs.html page with research documentation
+    // For now, send a simple placeholder
+    res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Docs — Qaulium AI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="site-header" id="siteHeader">
+        <nav class="nav-container">
+            <a href="/" class="nav-logo">
+                <img class="logo-mark" src="logo-white.png" alt="Qaulium AI" height="36">
+            </a>
+        </nav>
+    </header>
+    <main>
+        <section class="hero" style="min-height: 80vh; display: flex; align-items: center;">
+            <div class="container" style="text-align: center;">
+                <h1 class="hero-headline">Research Documentation</h1>
+                <p class="hero-sub">Coming Soon</p>
+                <div class="hero-actions" style="justify-content: center; margin-top: 2rem;">
+                    <a href="/" class="btn btn-primary">Back to Home</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="main.js"></script>
+</body>
+</html>
+    `);
+});
+
 // Fallback error handler
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
