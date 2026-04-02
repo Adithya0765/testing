@@ -3910,6 +3910,7 @@ if (!process.env.VERCEL) {
 // --- Catch-all route: Serve index.html for all non-API routes ---
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     const indexPath = path.join(__dirname, 'index.html');
     res.sendFile(indexPath, (err) => {
         if (err) {
@@ -3917,6 +3918,42 @@ app.get('/', (req, res) => {
             return res.status(404).json({ success: false, message: 'Not found' });
         }
     });
+});
+
+app.get('/index.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/hardware.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'hardware.html'));
+});
+
+app.get('/careers.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'careers.html'));
+});
+
+app.get('/registration.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'registration.html'));
+});
+
+app.get('/careers-apply.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'careers-apply.html'));
+});
+
+app.get('/password-reset.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'password-reset.html'));
 });
 
 // Fallback error handler
