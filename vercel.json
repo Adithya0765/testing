@@ -1,49 +1,23 @@
 {
   "version": 2,
-  "framework": null,
-  "installCommand": "npm install --omit=optional",
-  "buildCommand": "npm run build",
-  "outputDirectory": "public",
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/index.js"
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/admin/(.*)",
+      "dest": "/server.js"
     },
     {
-      "source": "/hardware",
-      "destination": "/hardware.html"
+      "src": "/api/(.*)",
+      "dest": "/server.js"
     },
     {
-      "source": "/careers",
-      "destination": "/careers.html"
-    },
-    {
-      "source": "/careers/apply",
-      "destination": "/careers-apply.html"
-    },
-    {
-      "source": "/registration",
-      "destination": "/registration.html"
-    },
-    {
-      "source": "/pre-register",
-      "destination": "/registration.html"
-    },
-    {
-      "source": "/pre-registration",
-      "destination": "/registration.html"
-    },
-    {
-      "source": "/password-reset",
-      "destination": "/password-reset.html"
-    },
-    {
-      "source": "/forms",
-      "destination": "/forms.html"
-    },
-    {
-      "source": "/forms/:slug",
-      "destination": "/forms.html"
+      "src": "/(.*)",
+      "dest": "/server.js"
     }
   ]
 }
