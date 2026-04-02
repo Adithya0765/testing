@@ -293,7 +293,6 @@ img { max-width: 100%; display: block; }
     min-height: 100vh;
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
 .hero-split {
@@ -301,12 +300,10 @@ img { max-width: 100%; display: block; }
     grid-template-columns: 1fr 1fr;
     gap: 80px;
     align-items: center;
-    width: 100%;
 }
 
 .hero-content {
     max-width: 560px;
-    text-align: left;
 }
 
 .hero.hero-simple {
