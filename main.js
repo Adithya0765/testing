@@ -751,3 +751,59 @@
     }
 
 })();
+
+    // --- Horizontal scroll for capabilities section ---
+    (function () {
+        var capabilitiesScroll = document.getElementById('capabilitiesScroll');
+        if (!capabilitiesScroll) return;
+
+        var isScrolling = false;
+        var scrollTimeout;
+
+        function handleWheel(e) {
+            var container = capabilitiesScroll;
+            var scrollLeft = container.scrollLeft;
+            var scrollWidth = container.scrollWidth;
+            var clientWidth = container.clientWidth;
+            var maxScroll = scrollWidth - clientWidth;
+
+            // Check if we're at the end of horizontal scroll
+            var atEnd = scrollLeft >= maxScroll - 5;
+            var atStart = scrollLeft <= 5;
+
+            // If scrolling down and at the end, allow page scroll
+            if (e.deltaY > 0 && atEnd) {
+                return; // Let the page scroll naturally
+            }
+
+            // If scrolling up and at the start, allow page scroll
+            if (e.deltaY < 0 && atStart) {
+                return; // Let the page scroll naturally
+            }
+
+            // Otherwise, hijack scroll for horizontal movement
+            e.preventDefault();
+            container.scrollLeft += e.deltaY;
+            isScrolling = true;
+
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(function () {
+                isScrolling = false;
+            }, 150);
+        }
+
+        // Only enable horizontal scroll when the section is in view
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    capabilitiesScroll.addEventListener('wheel', handleWheel, { passive: false });
+                } else {
+                    capabilitiesScroll.removeEventListener('wheel', handleWheel);
+                }
+            });
+        }, {
+            threshold: 0.3
+        });
+
+        observer.observe(capabilitiesScroll);
+    })();
