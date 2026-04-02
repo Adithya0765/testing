@@ -4004,6 +4004,15 @@ app.get('/password-reset', (req, res) => {
     res.sendFile(path.join(__dirname, 'password-reset.html'));
 });
 
+// Research page route (placeholder for future implementation)
+app.get('/research', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    // TODO: Create research.html page
+    // For now, redirect to main page with research section
+    res.redirect('/#products');
+});
+
 // Fallback error handler
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
