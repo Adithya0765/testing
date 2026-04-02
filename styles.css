@@ -2220,3 +2220,243 @@ img { max-width: 100%; display: block; }
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================
+   Vision Section
+   ============================================ */
+
+.section-vision {
+    border-top: 1px solid var(--color-border);
+}
+
+.vision-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+    align-items: center;
+}
+
+.vision-text {
+    font-size: clamp(18px, 2vw, 24px);
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    color: var(--color-text-muted);
+}
+
+/* ============================================
+   System Section
+   ============================================ */
+
+.section-system {
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.02) 100%);
+}
+
+.system-stack {
+    border-top: 1px solid var(--color-border);
+}
+
+.system-layer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-items: start;
+    border-bottom: 1px solid var(--color-border);
+    padding: 24px 0;
+}
+
+.system-layer h3 {
+    font-family: var(--font-heading);
+    font-size: clamp(20px, 1.8vw, 26px);
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.system-layer p {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+/* ============================================
+   Craft Section
+   ============================================ */
+
+.craft-list {
+    border-top: 1px solid var(--color-border);
+}
+
+.craft-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.craft-row h3 {
+    font-family: var(--font-heading);
+    font-size: clamp(19px, 1.8vw, 24px);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+.craft-row p {
+    font-size: 15px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+/* ============================================
+   Component Gallery
+   ============================================ */
+
+.component-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.component-panel {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 24px;
+    background: var(--color-surface);
+}
+
+.component-panel h3 {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.component-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.component-row.pills {
+    gap: 10px;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.status-pill.success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.status-pill.warning {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+
+.status-pill.neutral {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
+
+.component-table {
+    display: grid;
+    gap: 10px;
+}
+
+.component-table div {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-bg);
+}
+
+.component-table span {
+    color: var(--color-text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+
+.component-table strong {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* ============================================
+   Outcomes Section
+   ============================================ */
+
+.section-outcomes {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.section-outcomes .section-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.section-outcomes .section-heading {
+    color: #ffffff;
+}
+
+.outcome-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 32px;
+}
+
+.outcome-number {
+    font-family: var(--font-heading);
+    font-size: clamp(36px, 4vw, 56px);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.outcome-copy {
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.5;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+@media (min-width: 768px) {
+    .vision-layout {
+        grid-template-columns: 1.2fr 1fr;
+    }
+    
+    .system-layer {
+        grid-template-columns: 1fr;
+    }
+    
+    .craft-row {
+        grid-template-columns: 1fr 1.5fr;
+        gap: 40px;
+    }
+}
+
+@media (max-width: 767px) {
+    .outcome-grid,
+    .component-gallery {
+        grid-template-columns: 1fr;
+    }
+}
