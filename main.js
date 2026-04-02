@@ -913,7 +913,7 @@
         });
     })();
 
-    // --- Infinite carousel auto-scroll for Hardware Capabilities ---
+    // --- Infinite carousel for Hardware Capabilities (CSS animation) ---
     (function() {
         var container = document.getElementById('capabilitiesHorizontal');
         if (!container) return;
@@ -924,39 +924,4 @@
             var clone = card.cloneNode(true);
             container.appendChild(clone);
         });
-
-        var scrollSpeed = 1; // pixels per frame
-        var isPaused = false;
-        var cardWidth = originalCards[0] ? originalCards[0].offsetWidth + 24 : 444; // card width + gap
-        var resetPoint = cardWidth * originalCards.length;
-
-        function autoScroll() {
-            if (!isPaused) {
-                container.scrollLeft += scrollSpeed;
-                
-                // When we've scrolled past the original set, reset to start seamlessly
-                if (container.scrollLeft >= resetPoint) {
-                    container.scrollLeft = 0;
-                }
-            }
-            requestAnimationFrame(autoScroll);
-        }
-
-        // Pause on hover
-        container.addEventListener('mouseenter', function() {
-            isPaused = true;
-        });
-
-        container.addEventListener('mouseleave', function() {
-            isPaused = false;
-        });
-
-        // Recalculate on resize
-        window.addEventListener('resize', function() {
-            cardWidth = originalCards[0] ? originalCards[0].offsetWidth + 24 : 444;
-            resetPoint = cardWidth * originalCards.length;
-        });
-
-        // Start auto-scroll
-        autoScroll();
     })();

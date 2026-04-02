@@ -1496,6 +1496,20 @@ img { max-width: 100%; display: block; }
     display: flex;
     gap: 24px;
     padding: 20px 0;
+    animation: infiniteScroll 30s linear infinite;
+}
+
+.capabilities-horizontal:hover {
+    animation-play-state: paused;
+}
+
+@keyframes infiniteScroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 .capability-card-horizontal {
