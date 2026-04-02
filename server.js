@@ -3932,7 +3932,19 @@ app.get('/hardware.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'hardware.html'));
 });
 
+app.get('/hardware', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'hardware.html'));
+});
+
 app.get('/careers.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'careers.html'));
+});
+
+app.get('/careers', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'careers.html'));
@@ -3944,13 +3956,31 @@ app.get('/registration.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'registration.html'));
 });
 
+app.get('/registration', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'registration.html'));
+});
+
 app.get('/careers-apply.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'careers-apply.html'));
 });
 
+app.get('/careers-apply', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'careers-apply.html'));
+});
+
 app.get('/password-reset.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'password-reset.html'));
+});
+
+app.get('/password-reset', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'password-reset.html'));
