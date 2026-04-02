@@ -918,10 +918,14 @@
         var container = document.getElementById('capabilitiesHorizontal');
         if (!container) return;
 
-        // Duplicate all cards to create seamless loop
+        // Duplicate cards multiple times for truly seamless loop
         var originalCards = Array.from(container.children);
-        originalCards.forEach(function(card) {
-            var clone = card.cloneNode(true);
-            container.appendChild(clone);
-        });
+        
+        // Create 3 sets of duplicates for ultra-smooth looping
+        for (var i = 0; i < 3; i++) {
+            originalCards.forEach(function(card) {
+                var clone = card.cloneNode(true);
+                container.appendChild(clone);
+            });
+        }
     })();

@@ -1476,7 +1476,8 @@ img { max-width: 100%; display: block; }
     display: flex;
     gap: 24px;
     padding: 20px 0;
-    animation: infiniteScroll 30s linear infinite;
+    animation: infiniteScroll 60s linear infinite;
+    will-change: transform;
 }
 
 .capabilities-horizontal:hover {
@@ -1488,7 +1489,7 @@ img { max-width: 100%; display: block; }
         transform: translateX(0);
     }
     100% {
-        transform: translateX(-50%);
+        transform: translateX(calc(-25%));
     }
 }
 
