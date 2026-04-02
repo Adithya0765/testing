@@ -29,11 +29,19 @@
                         <span class="dropdown-caret" aria-hidden="true"></span>
                     </button>
                     <ul class="nav-dropdown-menu" id="productMenu">
-                        <li><a href="#products">Product Overview</a></li>
-                        <li><a href="#system">System</a></li>
-                        <li><a href="#craft">Craft</a></li>
-                        <li><a href="hardware.html">NIRVANA Hardware</a></li>
-                        <li><a href="careers.html">Careers</a></li>
+                        <div class="dropdown-columns">
+                            <div class="dropdown-column">
+                                <span class="dropdown-column-title">Hardware</span>
+                                <li><a href="hardware.html">NIRVANA</a></li>
+                            </div>
+                            <div class="dropdown-column">
+                                <span class="dropdown-column-title">Software</span>
+                                <li><a href="#software">Visual Circuit Builder & IDE</a></li>
+                                <li><a href="#software">vQPU Simulation Engine</a></li>
+                                <li><a href="#software">Quantum AI Co-Scientist</a></li>
+                                <li><a href="#software">Time-Travel Debugger</a></li>
+                            </div>
+                        </div>
                     </ul>
                 </li>
                 <li><a href="#" class="nav-cta">Get Early Access</a></li>
@@ -212,6 +220,72 @@
                         </div>
                         <div class="surface-meta">
                             <span>Feature 03</span>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-software" id="software">
+            <div class="container">
+                <div class="section-head">
+                    <p class="section-label">Software</p>
+                    <h2 class="section-heading">Complete quantum development toolkit.</h2>
+                </div>
+
+                <div class="layer-showcase">
+                    <article class="layer-surface">
+                        <div class="layer-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <polyline points="16 18 22 12 16 6"/>
+                                <polyline points="8 6 2 12 8 18"/>
+                            </svg>
+                        </div>
+                        <div class="layer-surface-head">
+                            <h3>Visual Circuit Builder & IDE</h3>
+                            <p>Drag-and-drop circuit editor with bi-directional code sync and quantum-aware autocomplete.</p>
+                        </div>
+                    </article>
+
+                    <article class="layer-surface">
+                        <div class="layer-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                        </div>
+                        <div class="layer-surface-head">
+                            <h3>vQPU Simulation Engine</h3>
+                            <p>Scalable virtual quantum processor with live digital twins of IBM, IonQ, and Rigetti hardware.</p>
+                        </div>
+                    </article>
+
+                    <article class="layer-surface">
+                        <div class="layer-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                <line x1="9" y1="10" x2="15" y2="10"/>
+                                <line x1="12" y1="7" x2="12" y2="13"/>
+                            </svg>
+                        </div>
+                        <div class="layer-surface-head">
+                            <h3>Quantum AI Co-Scientist</h3>
+                            <p>AI assistant that generates circuits from natural language and optimizes algorithms.</p>
+                        </div>
+                    </article>
+
+                    <article class="layer-surface">
+                        <div class="layer-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                                <path d="M16.24 7.76a6 6 0 0 1-8.49 8.49"/>
+                            </svg>
+                        </div>
+                        <div class="layer-surface-head">
+                            <h3>Time-Travel Debugger</h3>
+                            <p>Step forward and backward through gate execution with full state inspection at every point.</p>
                         </div>
                     </article>
                 </div>
