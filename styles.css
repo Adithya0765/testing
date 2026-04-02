@@ -307,6 +307,9 @@ img { max-width: 100%; display: block; }
 .hero-content {
     max-width: 560px;
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .hero.hero-simple {
@@ -421,6 +424,7 @@ img { max-width: 100%; display: block; }
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 400px;
 }
 
 .qc-circuit {
