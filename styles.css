@@ -424,13 +424,15 @@ img { max-width: 100%; display: block; }
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 400px;
 }
 
 .qc-circuit {
     position: relative;
     width: 520px;
+    min-height: 300px;
     padding: 0;
+    display: flex;
+    align-items: center;
 }
 
 /* Grid layout: label column + gate columns */
