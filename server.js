@@ -3938,6 +3938,12 @@ app.get('/hardware', (req, res) => {
     res.sendFile(path.join(__dirname, 'hardware.html'));
 });
 
+app.get('/nirvana', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'hardware.html'));
+});
+
 app.get('/careers.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
@@ -3962,6 +3968,12 @@ app.get('/registration', (req, res) => {
     res.sendFile(path.join(__dirname, 'registration.html'));
 });
 
+app.get('/early-access', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'registration.html'));
+});
+
 app.get('/careers-apply.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
@@ -3969,6 +3981,12 @@ app.get('/careers-apply.html', (req, res) => {
 });
 
 app.get('/careers-apply', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'careers-apply.html'));
+});
+
+app.get('/careers/apply', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'careers-apply.html'));
