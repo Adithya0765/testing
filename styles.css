@@ -160,7 +160,7 @@ img { max-width: 100%; display: block; }
 .nav-dropdown-menu {
     display: none;
     position: absolute;
-    top: calc(100% + 14px);
+    top: calc(100% + 4px);
     left: -10px;
     min-width: 220px;
     background: var(--color-bg);
