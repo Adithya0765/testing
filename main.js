@@ -912,3 +912,36 @@
             init();
         });
     })();
+
+    // --- Auto-scroll for Hardware Capabilities ---
+    (function() {
+        var container = document.getElementById('capabilitiesHorizontal');
+        if (!container) return;
+
+        var scrollSpeed = 0.5; // pixels per frame
+        var isPaused = false;
+
+        function autoScroll() {
+            if (!isPaused) {
+                container.scrollLeft += scrollSpeed;
+                
+                // Reset to beginning when reaching the end for infinite loop
+                if (container.scrollLeft >= container.scrollWidth - container.clientWidth) {
+                    container.scrollLeft = 0;
+                }
+            }
+            requestAnimationFrame(autoScroll);
+        }
+
+        // Pause on hover
+        container.addEventListener('mouseenter', function() {
+            isPaused = true;
+        });
+
+        container.addEventListener('mouseleave', function() {
+            isPaused = false;
+        });
+
+        // Start auto-scroll
+        autoScroll();
+    })();
