@@ -153,7 +153,7 @@ img { max-width: 100%; display: block; }
     vertical-align: middle;
 }
 
-.nav-dropdown.open .dropdown-caret {
+.nav-dropdown:hover .dropdown-caret {
     transform: rotate(180deg);
 }
 
@@ -171,7 +171,7 @@ img { max-width: 100%; display: block; }
     z-index: 200;
 }
 
-.nav-dropdown.open .nav-dropdown-menu {
+.nav-dropdown:hover .nav-dropdown-menu {
     display: block;
 }
 

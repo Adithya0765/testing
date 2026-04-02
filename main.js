@@ -72,31 +72,15 @@
         });
     }
 
-    // --- Desktop products dropdown ---
+    // --- Desktop products dropdown (hover-based, no JS needed for open/close) ---
     var productDropdown = document.getElementById('productDropdown');
-    var productMenuToggle = document.getElementById('productMenuToggle');
 
-    if (productDropdown && productMenuToggle) {
-        productMenuToggle.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            var isOpen = productDropdown.classList.toggle('open');
-            productMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        });
-
+    if (productDropdown) {
+        // Keep links functional for navigation
         productDropdown.querySelectorAll('a').forEach(function (link) {
             link.addEventListener('click', function () {
-                productDropdown.classList.remove('open');
-                productMenuToggle.setAttribute('aria-expanded', 'false');
+                // Just let the link work normally
             });
-        });
-
-        document.addEventListener('click', function (e) {
-            if (!productDropdown.contains(e.target)) {
-                productDropdown.classList.remove('open');
-                productMenuToggle.setAttribute('aria-expanded', 'false');
-            }
         });
     }
 
