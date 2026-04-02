@@ -648,23 +648,34 @@ img { max-width: 100%; display: block; }
 .layer-surface {
     border: 1px solid var(--color-border);
     border-radius: 16px;
-    padding: 24px;
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.94) 0%, rgba(249, 250, 251, 0.98) 100%);
+    padding: 32px 28px;
+    background: var(--color-bg);
+    transition: background 0.3s var(--ease-out), border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.layer-surface:hover {
+    background: var(--color-surface);
+    border-color: var(--color-text-tertiary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
 }
 
 .layer-surface-head h3 {
     font-family: var(--font-heading);
-    font-size: 22px;
+    font-size: 20px;
     letter-spacing: -0.02em;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     color: var(--color-primary);
+    font-weight: 600;
+    line-height: 1.3;
 }
 
 .layer-surface-head p {
     color: var(--color-text-secondary);
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     font-size: 15px;
-    line-height: 1.65;
+    line-height: 1.7;
 }
 
 .diagnostic-timeline {
@@ -809,8 +820,13 @@ img { max-width: 100%; display: block; }
 }
 
 [data-theme="dark"] .layer-surface {
-    border-color: rgba(255, 255, 255, 0.09);
-    background: linear-gradient(160deg, rgba(20, 29, 37, 0.78) 0%, rgba(17, 24, 32, 0.95) 100%);
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .layer-surface:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="dark"] .governance-grid div {
@@ -840,21 +856,30 @@ img { max-width: 100%; display: block; }
 
 .arch-block {
     background: var(--color-bg);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    border-radius: 12px;
-    padding: 34px 30px;
-    transition: background 0.2s var(--ease-out);
-    min-height: 270px;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    transition: background 0.3s var(--ease-out), border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+    min-height: 240px;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 [data-theme="dark"] .arch-block {
-    border-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .arch-block:hover {
     background: var(--color-surface);
+    border-color: var(--color-text-tertiary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+[data-theme="dark"] .arch-block:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .arch-diagram {
@@ -872,25 +897,27 @@ img { max-width: 100%; display: block; }
 .arch-number {
     display: inline-block;
     font-family: var(--font-heading);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--color-accent);
-    margin-bottom: 12px;
+    color: var(--color-text-tertiary);
+    margin-bottom: 20px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 .arch-content h3 {
     font-family: var(--font-heading);
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--color-primary);
     margin-bottom: 12px;
-    line-height: 1.25;
+    line-height: 1.3;
 }
 
 .arch-content p {
-    font-size: 14px;
-    line-height: 1.65;
+    font-size: 15px;
+    line-height: 1.7;
     color: var(--color-text-secondary);
 }
 
@@ -2248,7 +2275,13 @@ img { max-width: 100%; display: block; }
    ============================================ */
 
 .section-system {
-    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.02) 100%);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border-light);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.section-craft {
+    background: var(--color-bg);
 }
 
 .system-stack {
