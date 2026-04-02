@@ -913,10 +913,17 @@
         });
     })();
 
-    // --- Continuous auto-scroll for Hardware Capabilities ---
+    // --- Infinite carousel auto-scroll for Hardware Capabilities ---
     (function() {
         var container = document.getElementById('capabilitiesHorizontal');
         if (!container) return;
+
+        // Duplicate all cards to create seamless loop
+        var cards = Array.from(container.children);
+        cards.forEach(function(card) {
+            var clone = card.cloneNode(true);
+            container.appendChild(clone);
+        });
 
         var scrollSpeed = 1; // pixels per frame
         var isPaused = false;
@@ -925,8 +932,9 @@
             if (!isPaused) {
                 container.scrollLeft += scrollSpeed;
                 
-                // Reset to beginning when reaching the end for infinite loop
-                if (container.scrollLeft >= container.scrollWidth - container.clientWidth) {
+                // When we've scrolled past the original set, reset to start
+                var maxScroll = container.scrollWidth / 2;
+                if (container.scrollLeft >= maxScroll) {
                     container.scrollLeft = 0;
                 }
             }
