@@ -758,62 +758,57 @@
         if (!capabilitiesScroll) return;
 
         var section = document.querySelector('.section-capabilities');
-        var isScrollLocked = false;
-        var scrollProgress = 0;
-        var maxHorizontalScroll = 0;
+        if (!section) return;
 
-        function updateMetrics() {
-            maxHorizontalScroll = capabilitiesScroll.scrollWidth - capabilitiesScroll.clientWidth;
+        var isLocked = false;
+        var maxScroll = 0;
+
+        function updateMaxScroll() {
+            maxScroll = capabilitiesScroll.scrollWidth - capabilitiesScroll.clientWidth;
+        }
+
+        function isInViewport() {
+            var rect = section.getBoundingClientRect();
+            return rect.top < window.innerHeight && rect.bottom > 0;
         }
 
         function handleWheel(e) {
-            if (!section) return;
-
-            var rect = section.getBoundingClientRect();
-            var inSection = rect.top <= window.innerHeight * 0.5 && rect.bottom >= window.innerHeight * 0.5;
-
-            if (!inSection) {
-                isScrollLocked = false;
+            if (!isInViewport()) {
+                isLocked = false;
                 return;
             }
 
-            updateMetrics();
+            updateMaxScroll();
 
-            var scrollLeft = capabilitiesScroll.scrollLeft;
-            var atStart = scrollLeft <= 5;
-            var atEnd = scrollLeft >= maxHorizontalScroll - 5;
+            var currentScroll = capabilitiesScroll.scrollLeft;
+            var isAtStart = currentScroll <= 1;
+            var isAtEnd = currentScroll >= maxScroll - 1;
 
-            // Scrolling down
+            // Scrolling down (positive deltaY)
             if (e.deltaY > 0) {
-                if (atEnd) {
-                    // At the end, allow page scroll to continue
-                    isScrollLocked = false;
-                    return;
-                } else {
-                    // Not at end, lock and scroll horizontally
+                if (!isAtEnd) {
+                    // Not at end yet, prevent page scroll and scroll horizontally
                     e.preventDefault();
-                    isScrollLocked = true;
                     capabilitiesScroll.scrollLeft += e.deltaY;
+                    isLocked = true;
                 }
+                // If at end, allow normal page scroll (don't prevent default)
             }
-            // Scrolling up
+            // Scrolling up (negative deltaY)
             else if (e.deltaY < 0) {
-                if (atStart) {
-                    // At the start, allow page scroll
-                    isScrollLocked = false;
-                    return;
-                } else {
-                    // Not at start, lock and scroll horizontally
+                if (!isAtStart) {
+                    // Not at start yet, prevent page scroll and scroll horizontally
                     e.preventDefault();
-                    isScrollLocked = true;
                     capabilitiesScroll.scrollLeft += e.deltaY;
+                    isLocked = true;
                 }
+                // If at start, allow normal page scroll (don't prevent default)
             }
         }
 
+        // Listen to wheel events on the entire window
         window.addEventListener('wheel', handleWheel, { passive: false });
-        window.addEventListener('resize', updateMetrics, { passive: true });
-
-        // Initial setup
-        updateMetrics();
+        window.addEventListener('resize', updateMaxScroll);
+        
+        updateMaxScroll();
     })();
