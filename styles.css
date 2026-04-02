@@ -418,6 +418,7 @@ img { max-width: 100%; display: block; }
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
 }
 
 .qc-circuit {
@@ -585,7 +586,7 @@ img { max-width: 100%; display: block; }
 }
 
 .qc-label-cell {
-    opacity: 0;
+    opacity: 1;
 }
 
 .qc-label-cell.qc-pop {
