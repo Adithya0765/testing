@@ -760,25 +760,23 @@
         var section = document.querySelector('.section-capabilities');
         if (!section) return;
 
-        var isLocked = false;
         var maxScroll = 0;
-        var lastScrollY = window.scrollY;
-        var scrollVelocity = 0;
+        var ticking = false;
 
         function updateMaxScroll() {
             maxScroll = capabilitiesScroll.scrollWidth - capabilitiesScroll.clientWidth;
         }
 
-        function isInMiddleOfViewport() {
-            var rect = section.getBoundingClientRect();
+        function isCardsInMiddle() {
+            // Check if the cards container (not the section) is in the middle
+            var rect = capabilitiesScroll.getBoundingClientRect();
             var viewportMiddle = window.innerHeight / 2;
-            // Section is in middle when its top is above middle and bottom is below middle
+            // Cards are in middle when container top is above middle and bottom is below middle
             return rect.top <= viewportMiddle && rect.bottom >= viewportMiddle;
         }
 
         function handleWheel(e) {
-            if (!isInMiddleOfViewport()) {
-                isLocked = false;
+            if (!isCardsInMiddle()) {
                 return;
             }
 
@@ -793,59 +791,29 @@
                 if (!isAtEnd) {
                     // Not at end yet, prevent page scroll and scroll horizontally
                     e.preventDefault();
+                    e.stopPropagation();
                     capabilitiesScroll.scrollLeft += e.deltaY;
-                    isLocked = true;
+                } else {
+                    // At end, allow normal page scroll
+                    return;
                 }
-                // If at end, allow normal page scroll (don't prevent default)
             }
             // Scrolling up (negative deltaY)
             else if (e.deltaY < 0) {
                 if (!isAtStart) {
                     // Not at start yet, prevent page scroll and scroll horizontally
                     e.preventDefault();
+                    e.stopPropagation();
                     capabilitiesScroll.scrollLeft += e.deltaY;
-                    isLocked = true;
+                } else {
+                    // At start, allow normal page scroll
+                    return;
                 }
-                // If at start, allow normal page scroll (don't prevent default)
             }
         }
 
-        function handleScroll() {
-            var currentScrollY = window.scrollY;
-            scrollVelocity = currentScrollY - lastScrollY;
-            lastScrollY = currentScrollY;
-
-            if (!isInMiddleOfViewport()) {
-                isLocked = false;
-                return;
-            }
-
-            updateMaxScroll();
-
-            var currentScroll = capabilitiesScroll.scrollLeft;
-            var isAtStart = currentScroll <= 1;
-            var isAtEnd = currentScroll >= maxScroll - 1;
-
-            // If we're in the middle and not at boundaries, lock the page scroll
-            if (scrollVelocity > 0 && !isAtEnd) {
-                // Scrolling down, not at end - convert to horizontal scroll
-                window.scrollTo(0, lastScrollY - scrollVelocity);
-                capabilitiesScroll.scrollLeft += scrollVelocity * 3;
-                isLocked = true;
-            } else if (scrollVelocity < 0 && !isAtStart) {
-                // Scrolling up, not at start - convert to horizontal scroll
-                window.scrollTo(0, lastScrollY - scrollVelocity);
-                capabilitiesScroll.scrollLeft += scrollVelocity * 3;
-                isLocked = true;
-            }
-        }
-
-        // Listen to wheel events for mouse wheel
+        // Use wheel event which works for both mouse wheel and trackpad
         window.addEventListener('wheel', handleWheel, { passive: false });
-        
-        // Listen to scroll events for scrollbar
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        
         window.addEventListener('resize', updateMaxScroll);
         
         updateMaxScroll();
