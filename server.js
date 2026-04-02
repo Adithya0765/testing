@@ -359,9 +359,6 @@ app.get('/favicon.ico', (req, res) => {
     }
 });
 
-// Explicit careers route for environments where extension fallback is skipped
-registerStaticPageRoutes(app, __dirname);
-
 function normalizeAllowedOrigin(rawValue) {
     const value = String(rawValue || '').trim();
     if (!value) return '';
@@ -3839,6 +3836,9 @@ try {
 } catch (err) {
     console.error('Employee portal API routes initialization failed:', err.message);
 }
+
+// --- Static Page Routes ---
+registerStaticPageRoutes(app, __dirname);
 
 // --- Password Reset Routes ---
 app.post('/api/password-reset/request', passwordResetModule.handlePasswordResetRequest);
