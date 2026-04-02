@@ -762,18 +762,22 @@
 
         var isLocked = false;
         var maxScroll = 0;
+        var lastScrollY = window.scrollY;
+        var scrollVelocity = 0;
 
         function updateMaxScroll() {
             maxScroll = capabilitiesScroll.scrollWidth - capabilitiesScroll.clientWidth;
         }
 
-        function isInViewport() {
+        function isInMiddleOfViewport() {
             var rect = section.getBoundingClientRect();
-            return rect.top < window.innerHeight && rect.bottom > 0;
+            var viewportMiddle = window.innerHeight / 2;
+            // Section is in middle when its top is above middle and bottom is below middle
+            return rect.top <= viewportMiddle && rect.bottom >= viewportMiddle;
         }
 
         function handleWheel(e) {
-            if (!isInViewport()) {
+            if (!isInMiddleOfViewport()) {
                 isLocked = false;
                 return;
             }
@@ -806,8 +810,42 @@
             }
         }
 
-        // Listen to wheel events on the entire window
+        function handleScroll() {
+            var currentScrollY = window.scrollY;
+            scrollVelocity = currentScrollY - lastScrollY;
+            lastScrollY = currentScrollY;
+
+            if (!isInMiddleOfViewport()) {
+                isLocked = false;
+                return;
+            }
+
+            updateMaxScroll();
+
+            var currentScroll = capabilitiesScroll.scrollLeft;
+            var isAtStart = currentScroll <= 1;
+            var isAtEnd = currentScroll >= maxScroll - 1;
+
+            // If we're in the middle and not at boundaries, lock the page scroll
+            if (scrollVelocity > 0 && !isAtEnd) {
+                // Scrolling down, not at end - convert to horizontal scroll
+                window.scrollTo(0, lastScrollY - scrollVelocity);
+                capabilitiesScroll.scrollLeft += scrollVelocity * 3;
+                isLocked = true;
+            } else if (scrollVelocity < 0 && !isAtStart) {
+                // Scrolling up, not at start - convert to horizontal scroll
+                window.scrollTo(0, lastScrollY - scrollVelocity);
+                capabilitiesScroll.scrollLeft += scrollVelocity * 3;
+                isLocked = true;
+            }
+        }
+
+        // Listen to wheel events for mouse wheel
         window.addEventListener('wheel', handleWheel, { passive: false });
+        
+        // Listen to scroll events for scrollbar
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        
         window.addEventListener('resize', updateMaxScroll);
         
         updateMaxScroll();
