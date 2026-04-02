@@ -758,70 +758,62 @@
         if (!capabilitiesScroll) return;
 
         var section = document.querySelector('.section-capabilities');
-        var isInSection = false;
-        var sectionTop = 0;
-        var sectionHeight = 0;
+        var isScrollLocked = false;
+        var scrollProgress = 0;
         var maxHorizontalScroll = 0;
 
-        function updateSectionMetrics() {
-            if (!section) return;
-            var rect = section.getBoundingClientRect();
-            sectionTop = window.scrollY + rect.top;
-            sectionHeight = rect.height;
+        function updateMetrics() {
             maxHorizontalScroll = capabilitiesScroll.scrollWidth - capabilitiesScroll.clientWidth;
         }
 
-        function handleScroll() {
-            var scrollY = window.scrollY;
-            var viewportHeight = window.innerHeight;
-            
-            // Check if we're in the capabilities section
-            var inSection = scrollY >= sectionTop - viewportHeight * 0.3 && 
-                           scrollY <= sectionTop + sectionHeight;
-
-            if (inSection && !isInSection) {
-                // Entering section
-                isInSection = true;
-                updateSectionMetrics();
-            } else if (!inSection && isInSection) {
-                // Leaving section
-                isInSection = false;
-                capabilitiesScroll.scrollLeft = 0;
-            }
-
-            if (isInSection) {
-                // Calculate horizontal scroll position based on vertical scroll
-                var sectionProgress = (scrollY - sectionTop + viewportHeight * 0.3) / (sectionHeight + viewportHeight * 0.6);
-                sectionProgress = Math.max(0, Math.min(1, sectionProgress));
-                
-                var targetScrollLeft = sectionProgress * maxHorizontalScroll;
-                capabilitiesScroll.scrollLeft = targetScrollLeft;
-            }
-        }
-
-        // Also handle wheel events for direct horizontal scrolling
         function handleWheel(e) {
-            if (!isInSection) return;
-            
-            var scrollLeft = capabilitiesScroll.scrollLeft;
-            var atEnd = scrollLeft >= maxHorizontalScroll - 5;
-            var atStart = scrollLeft <= 5;
+            if (!section) return;
 
-            // If at end and scrolling down, or at start and scrolling up, allow page scroll
-            if ((e.deltaY > 0 && atEnd) || (e.deltaY < 0 && atStart)) {
+            var rect = section.getBoundingClientRect();
+            var inSection = rect.top <= window.innerHeight * 0.5 && rect.bottom >= window.innerHeight * 0.5;
+
+            if (!inSection) {
+                isScrollLocked = false;
                 return;
             }
 
-            // Otherwise, hijack for horizontal scroll
-            e.preventDefault();
-            capabilitiesScroll.scrollLeft += e.deltaY;
+            updateMetrics();
+
+            var scrollLeft = capabilitiesScroll.scrollLeft;
+            var atStart = scrollLeft <= 5;
+            var atEnd = scrollLeft >= maxHorizontalScroll - 5;
+
+            // Scrolling down
+            if (e.deltaY > 0) {
+                if (atEnd) {
+                    // At the end, allow page scroll to continue
+                    isScrollLocked = false;
+                    return;
+                } else {
+                    // Not at end, lock and scroll horizontally
+                    e.preventDefault();
+                    isScrollLocked = true;
+                    capabilitiesScroll.scrollLeft += e.deltaY;
+                }
+            }
+            // Scrolling up
+            else if (e.deltaY < 0) {
+                if (atStart) {
+                    // At the start, allow page scroll
+                    isScrollLocked = false;
+                    return;
+                } else {
+                    // Not at start, lock and scroll horizontally
+                    e.preventDefault();
+                    isScrollLocked = true;
+                    capabilitiesScroll.scrollLeft += e.deltaY;
+                }
+            }
         }
 
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        window.addEventListener('resize', updateSectionMetrics, { passive: true });
-        capabilitiesScroll.addEventListener('wheel', handleWheel, { passive: false });
+        window.addEventListener('wheel', handleWheel, { passive: false });
+        window.addEventListener('resize', updateMetrics, { passive: true });
 
         // Initial setup
-        updateSectionMetrics();
-        handleScroll();
+        updateMetrics();
     })();
