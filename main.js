@@ -913,25 +913,38 @@
         });
     })();
 
-    // --- Auto-scroll for Hardware Capabilities ---
+    // --- Auto-scroll for Hardware Capabilities (snap to card like Prime Video) ---
     (function() {
         var container = document.getElementById('capabilitiesHorizontal');
         if (!container) return;
 
-        var scrollSpeed = 0.5; // pixels per frame
+        var currentIndex = 0;
+        var cards = container.querySelectorAll('.capability-card-horizontal');
         var isPaused = false;
+        var scrollInterval = 3000; // 3 seconds per card
 
-        function autoScroll() {
-            if (!isPaused) {
-                container.scrollLeft += scrollSpeed;
-                
-                // Reset to beginning when reaching the end for infinite loop
-                if (container.scrollLeft >= container.scrollWidth - container.clientWidth) {
-                    container.scrollLeft = 0;
-                }
+        function scrollToCard(index) {
+            if (index >= cards.length) {
+                index = 0; // Loop back to start
             }
-            requestAnimationFrame(autoScroll);
+            
+            var card = cards[index];
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+            }
+            
+            currentIndex = index;
         }
+
+        function autoAdvance() {
+            if (!isPaused) {
+                currentIndex++;
+                scrollToCard(currentIndex);
+            }
+        }
+
+        // Start auto-advance
+        var intervalId = setInterval(autoAdvance, scrollInterval);
 
         // Pause on hover
         container.addEventListener('mouseenter', function() {
@@ -942,6 +955,6 @@
             isPaused = false;
         });
 
-        // Start auto-scroll
-        autoScroll();
+        // Initial scroll to first card
+        scrollToCard(0);
     })();
