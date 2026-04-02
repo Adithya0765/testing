@@ -1466,30 +1466,10 @@ img { max-width: 100%; display: block; }
 }
 
 .capabilities-scroll-container {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-border) transparent;
-    padding: 0 32px 40px;
-}
-
-.capabilities-scroll-container::-webkit-scrollbar {
-    height: 8px;
-}
-
-.capabilities-scroll-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.capabilities-scroll-container::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 4px;
-}
-
-.capabilities-scroll-container::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-tertiary);
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+    padding: 0 0 40px;
 }
 
 .capabilities-horizontal {
