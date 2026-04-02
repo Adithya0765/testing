@@ -757,25 +757,22 @@
         var capabilitiesScroll = document.getElementById('capabilitiesScroll');
         if (!capabilitiesScroll) return;
 
-        var section = document.querySelector('.section-capabilities');
-        if (!section) return;
-
         var maxScroll = 0;
-        var ticking = false;
+        var isScrolling = false;
+        var scrollTimeout;
 
         function updateMaxScroll() {
             maxScroll = capabilitiesScroll.scrollWidth - capabilitiesScroll.clientWidth;
         }
 
         function isCardsInMiddle() {
-            // Check if the cards container (not the section) is in the middle
             var rect = capabilitiesScroll.getBoundingClientRect();
             var viewportMiddle = window.innerHeight / 2;
-            // Cards are in middle when container top is above middle and bottom is below middle
             return rect.top <= viewportMiddle && rect.bottom >= viewportMiddle;
         }
 
         function handleWheel(e) {
+            // Only intercept if cards are in middle of viewport
             if (!isCardsInMiddle()) {
                 return;
             }
@@ -783,38 +780,43 @@
             updateMaxScroll();
 
             var currentScroll = capabilitiesScroll.scrollLeft;
-            var isAtStart = currentScroll <= 1;
-            var isAtEnd = currentScroll >= maxScroll - 1;
+            var isAtStart = currentScroll <= 2;
+            var isAtEnd = currentScroll >= maxScroll - 2;
 
-            // Scrolling down (positive deltaY)
-            if (e.deltaY > 0) {
-                if (!isAtEnd) {
-                    // Not at end yet, prevent page scroll and scroll horizontally
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capabilitiesScroll.scrollLeft += e.deltaY;
-                } else {
-                    // At end, allow normal page scroll
-                    return;
-                }
+            // Determine scroll direction
+            var scrollingDown = e.deltaY > 0;
+            var scrollingUp = e.deltaY < 0;
+
+            // Only prevent default if we're not at boundaries
+            if (scrollingDown && !isAtEnd) {
+                e.preventDefault();
+                // Smooth horizontal scroll
+                capabilitiesScroll.scrollLeft += e.deltaY * 0.8;
+                isScrolling = true;
+            } else if (scrollingUp && !isAtStart) {
+                e.preventDefault();
+                // Smooth horizontal scroll
+                capabilitiesScroll.scrollLeft += e.deltaY * 0.8;
+                isScrolling = true;
+            } else {
+                // At boundary, allow normal scroll
+                isScrolling = false;
             }
-            // Scrolling up (negative deltaY)
-            else if (e.deltaY < 0) {
-                if (!isAtStart) {
-                    // Not at start yet, prevent page scroll and scroll horizontally
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capabilitiesScroll.scrollLeft += e.deltaY;
-                } else {
-                    // At start, allow normal page scroll
-                    return;
-                }
-            }
+
+            // Clear timeout and set new one
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(function() {
+                isScrolling = false;
+            }, 100);
         }
 
-        // Use wheel event which works for both mouse wheel and trackpad
+        // Listen to wheel events (works for mouse and trackpad)
         window.addEventListener('wheel', handleWheel, { passive: false });
         window.addEventListener('resize', updateMaxScroll);
         
+        // Initial setup
         updateMaxScroll();
+        
+        // Update on window load to ensure correct measurements
+        window.addEventListener('load', updateMaxScroll);
     })();
