@@ -919,22 +919,23 @@
         if (!container) return;
 
         // Duplicate all cards to create seamless loop
-        var cards = Array.from(container.children);
-        cards.forEach(function(card) {
+        var originalCards = Array.from(container.children);
+        originalCards.forEach(function(card) {
             var clone = card.cloneNode(true);
             container.appendChild(clone);
         });
 
         var scrollSpeed = 1; // pixels per frame
         var isPaused = false;
+        var cardWidth = originalCards[0] ? originalCards[0].offsetWidth + 24 : 444; // card width + gap
+        var resetPoint = cardWidth * originalCards.length;
 
         function autoScroll() {
             if (!isPaused) {
                 container.scrollLeft += scrollSpeed;
                 
-                // When we've scrolled past the original set, reset to start
-                var maxScroll = container.scrollWidth / 2;
-                if (container.scrollLeft >= maxScroll) {
+                // When we've scrolled past the original set, reset to start seamlessly
+                if (container.scrollLeft >= resetPoint) {
                     container.scrollLeft = 0;
                 }
             }
@@ -948,6 +949,12 @@
 
         container.addEventListener('mouseleave', function() {
             isPaused = false;
+        });
+
+        // Recalculate on resize
+        window.addEventListener('resize', function() {
+            cardWidth = originalCards[0] ? originalCards[0].offsetWidth + 24 : 444;
+            resetPoint = cardWidth * originalCards.length;
         });
 
         // Start auto-scroll
