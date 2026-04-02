@@ -142,8 +142,15 @@ img { max-width: 100%; display: block; }
 }
 
 .dropdown-caret {
-    font-size: 11px;
+    display: inline-block;
+    margin-left: 4px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid currentColor;
     transition: transform 0.2s var(--ease-out);
+    vertical-align: middle;
 }
 
 .nav-dropdown.open .dropdown-caret {
