@@ -4,9 +4,57 @@
     {
       "src": "server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "hardware.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "careers.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "careers-apply.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "registration.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "password-reset.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "forms.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/hardware.html",
+      "dest": "/hardware.html"
+    },
+    {
+      "src": "/careers.html",
+      "dest": "/careers.html"
+    },
+    {
+      "src": "/careers-apply.html",
+      "dest": "/careers-apply.html"
+    },
+    {
+      "src": "/registration.html",
+      "dest": "/registration.html"
+    },
+    {
+      "src": "/password-reset.html",
+      "dest": "/password-reset.html"
+    },
+    {
+      "src": "/forms.html",
+      "dest": "/forms.html"
+    },
     {
       "src": "/api/admin/(.*)",
       "dest": "/server.js"
